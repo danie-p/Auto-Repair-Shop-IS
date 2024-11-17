@@ -1,0 +1,27 @@
+import Model.Customer;
+import Model.ServiceVisit;
+
+public class Main {
+    public static void main(String[] args) {
+        ServiceVisit[] visits = new ServiceVisit[] {
+                new ServiceVisit(100, 100.0, "servisttthervavehrehshtqtv 1"),
+                new ServiceVisit(200, 200.0, "servis 2"),
+                new ServiceVisit(300, 300.0, "servis 3"),
+                new ServiceVisit(400, 400.0, "servis 4"),
+                new ServiceVisit(500, 500.0, "servis 5"),
+                new ServiceVisit(600, 600.0, "servis 6"),
+        };
+        Customer customer = new Customer("Jozef", "Skusobny", visits);
+
+        ServiceVisit[] visits2 = new ServiceVisit[] {
+                new ServiceVisit(900, 900.0, "TOTO JE ALE SERVISssss 1"),
+                new ServiceVisit(800, 800.0, "TOTO JE ALE SERVIS 2"),
+                new ServiceVisit(700, 700.0, "TOTO JE ALE SERVIS 3")
+        };
+        Customer customer2 = new Customer("Mia", "Testova", visits2);
+
+        byte[] arr = customer2.getByteArray();
+        customer.fromByteArray(arr);
+        System.out.println(customer);
+    }
+}
