@@ -1,5 +1,8 @@
+import HeapFile.HeapFile;
 import Model.Customer;
 import Model.ServiceVisit;
+
+import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) {
@@ -23,5 +26,12 @@ public class Main {
         byte[] arr = customer2.getByteArray();
         customer.fromByteArray(arr);
         System.out.println(customer);
+
+        HeapFile<Customer> heapFile = new HeapFile<Customer>("hf1.dat", 1024, customer);
+        try {
+            heapFile.insert(customer);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

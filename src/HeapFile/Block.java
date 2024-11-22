@@ -4,15 +4,19 @@ import java.io.*;
 import java.util.ArrayList;
 
 public class Block<T extends IData<T>> implements IRecord {
-    private ArrayList<IData<T>> records;
+    private ArrayList<T> records;
     private int recordsCount;
     private int validCount;
     private int next;
     private int previous;
 
-    public Block(int blockSize, IData<T> record) {
-        this.recordsCount = blockSize / record.getSize();
+    public Block(int clusterSize, T record) {
+        // z velkosti clustra vyhrad 3x int pre atributy bloku, zvysne bajty clustra sa mozu pouzit na ukladanie zaznamov
+        this.recordsCount = (clusterSize - 3 * Integer.BYTES) / record.getSize();
         this.records = new ArrayList<>(this.recordsCount);
+        for (int i = 0; i < this.recordsCount; i++) {
+            this.records.add(record.createClass());
+        }
         this.validCount = 0;
         this.next = -1;
         this.previous = -1;
@@ -26,13 +30,72 @@ public class Block<T extends IData<T>> implements IRecord {
         return this.validCount == 0;
     }
 
-    public boolean insertRecord(IData<T> insertedRecord) {
+    public boolean isFull() {
+        return this.validCount == this.recordsCount;
+    }
+
+    public boolean insertRecord(T recordToInsert) {
         if (this.isPartiallyEmpty() || this.isFullyEmpty()) {
-            this.records.set(validCount, insertedRecord);
+            // zaznam sa vlozi na prvu neplatnu poziciu v zozname,
+            // t.j. na index validCount (validCount zaroven oznacuje index prveho neplatneho zaznamu)
+            this.records.set(this.validCount, recordToInsert);
             this.validCount++;
             return true;
         }
         return false;
+    }
+
+    /**
+     * @param recordToGet dočasný záznam s nastaveným unikátnym ID, podľa ktorého sa má vyhľadať záznam v bloku
+     * @return nájdený záznam v bloku
+     */
+    public T getRecord(T recordToGet) {
+        int recordWithEqualIDIndex = this.findRecordWithEqualID(recordToGet);
+
+        // ak sa nenasiel v zozname ziadny zaznam s ID zhodnym s vyhladavanym zaznamom
+        if (recordWithEqualIDIndex == -1) {
+            return null;
+        }
+
+        return this.records.get(recordWithEqualIDIndex);
+    }
+
+    /**
+     * @param recordToDelete dočasný záznam s nastaveným unikátnym ID, podľa ktorého sa má vymazať záznam v bloku
+     * @return práve vymazaný záznam z bloku
+     */
+    public T deleteRecord(T recordToDelete) {
+        int recordWithEqualIDIndex = this.findRecordWithEqualID(recordToDelete);
+
+        // ak sa nenasiel v zozname ziadny zaznam s ID zhodnym s vyhladavanym zaznamom
+        if (recordWithEqualIDIndex == -1) {
+            return null;
+        }
+
+        T deletedRecord = this.records.get(recordWithEqualIDIndex);
+
+        // zneplatni mazany zaznam
+        // vymen mazany zaznam s poslednym platnym zaznamom (t.j. na indexe validCount - 1) v zozname
+        T temp = this.records.get(this.validCount - 1);
+        this.records.set(this.validCount - 1, deletedRecord);
+        this.records.set(recordWithEqualIDIndex, temp);
+        this.validCount--;
+        return deletedRecord;
+    }
+
+    /**
+     * @param recordWithSetID dočasný záznam s nastaveným ID, podľa ktorého sa má vyhľadať záznam v bloku
+     * @return index záznamu so zhodným ID; ak sa taký nenašiel, vracia sa -1
+     */
+    private int findRecordWithEqualID(T recordWithSetID) {
+        int recordWithEqualIDIndex = -1;
+        for (int i = 0; i < this.records.size(); i++) {
+            if (this.records.get(i).isEqualTo(recordWithSetID)) {
+                recordWithEqualIDIndex = i;
+                break;
+            }
+        }
+        return recordWithEqualIDIndex;
     }
 
     @Override
@@ -109,5 +172,16 @@ public class Block<T extends IData<T>> implements IRecord {
 
     public void setPrevious(int previous) {
         this.previous = previous;
+    }
+
+    @Override
+    public String toString() {
+        return "Block{" +
+                "records=" + records +
+                ", recordsCount=" + recordsCount +
+                ", validCount=" + validCount +
+                ", next=" + next +
+                ", previous=" + previous +
+                '}';
     }
 }

@@ -1,12 +1,11 @@
 package Model;
 
-import HeapFile.IData;
 import Tools.Constants;
 import Tools.StringProcessing;
 
 import java.io.*;
 
-public class ServiceVisit implements IData<ServiceVisit> {
+public class ServiceVisit {
     private int date;
     private double price;
     private String desc;
@@ -21,23 +20,11 @@ public class ServiceVisit implements IData<ServiceVisit> {
         this.descLength = (byte) this.desc.length();
     }
 
-    @Override
-    public ServiceVisit createClass() {
-        return new ServiceVisit(0, 0, "");
-    }
-
-    @Override
-    public boolean isEqualTo(ServiceVisit other) {
-        return this.ID == other.ID;
-    }
-
-    @Override
     public int getSize() {
         // maxDesc (20 bytes), descLength (1 byte), date (1 int), id (1 int), price (1 double)
         return Constants.serviceVisitSize;
     }
 
-    @Override
     public byte[] getByteArray() {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         DataOutputStream outStream = new DataOutputStream(byteArrayOutputStream);
@@ -59,7 +46,6 @@ public class ServiceVisit implements IData<ServiceVisit> {
         }
     }
 
-    @Override
     public void fromByteArray(byte[] byteArray) {
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArray);
         DataInputStream inStream = new DataInputStream(byteArrayInputStream);

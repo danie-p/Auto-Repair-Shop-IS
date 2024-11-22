@@ -23,16 +23,20 @@ public class Customer implements IData<Customer> {
         this.surnameLength = (byte) this.surname.length();
 
         for (int i = 0; i < Constants.maxCustomerServiceVisitsCount; i++) {
-            if (i < serviceVisits.length) {
+            if (serviceVisits != null && i < serviceVisits.length) {
                 this.serviceVisits[i] = serviceVisits[i];
             } else {
                 this.serviceVisits[i] = new ServiceVisit(0, 0, "");
             }
         }
 
-        this.serviceVisitsCount = serviceVisits.length >= Constants.maxCustomerServiceVisitsCount ?
-                Constants.maxCustomerServiceVisitsCount :
-                (byte) serviceVisits.length;
+        if (serviceVisits == null) {
+            this.serviceVisitsCount = 0;
+        } else if (serviceVisits.length >= Constants.maxCustomerServiceVisitsCount) {
+            this.serviceVisitsCount = Constants.maxCustomerServiceVisitsCount;
+        } else {
+            this.serviceVisitsCount = (byte) serviceVisits.length;
+        }
     }
 
     @Override
