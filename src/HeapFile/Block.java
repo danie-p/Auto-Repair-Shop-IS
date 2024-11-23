@@ -5,16 +5,15 @@ import java.util.ArrayList;
 
 public class Block<T extends IData<T>> implements IRecord {
     private ArrayList<T> records;
-    private int recordsCount;
     private int validCount;
     private int next;
     private int previous;
 
     public Block(int clusterSize, T record) {
         // z velkosti clustra vyhrad 3x int pre atributy bloku, zvysne bajty clustra sa mozu pouzit na ukladanie zaznamov
-        this.recordsCount = (clusterSize - 3 * Integer.BYTES) / record.getSize();
-        this.records = new ArrayList<>(this.recordsCount);
-        for (int i = 0; i < this.recordsCount; i++) {
+        int recordsCount = (clusterSize - 3 * Integer.BYTES) / record.getSize();
+        this.records = new ArrayList<>(recordsCount);
+        for (int i = 0; i < recordsCount; i++) {
             this.records.add(record.createClass());
         }
         this.validCount = 0;
@@ -23,7 +22,7 @@ public class Block<T extends IData<T>> implements IRecord {
     }
 
     public boolean isPartiallyEmpty() {
-        return this.validCount > 0 && this.validCount < this.recordsCount;
+        return this.validCount > 0 && this.validCount < this.records.size();
     }
 
     public boolean isFullyEmpty() {
@@ -31,7 +30,7 @@ public class Block<T extends IData<T>> implements IRecord {
     }
 
     public boolean isFull() {
-        return this.validCount == this.recordsCount;
+        return this.validCount == this.records.size();
     }
 
     public boolean insertRecord(T recordToInsert) {
@@ -141,7 +140,7 @@ public class Block<T extends IData<T>> implements IRecord {
             // iba platne data (prvych validCount zaznamov z records)
             for (int i = 0; i < this.validCount; i++) {
                 byte[] byteArrayRecord = new byte[this.records.get(0).getSize()];
-                System.arraycopy(byteArray, 3 + i * this.records.get(0).getSize(), byteArrayRecord, 0, this.records.get(0).getSize());
+                System.arraycopy(byteArray, 3 * Integer.BYTES + i * this.records.get(0).getSize(), byteArrayRecord, 0, this.records.get(0).getSize());
                 this.records.get(i).fromByteArray(byteArrayRecord);
             }
 
@@ -176,9 +175,14 @@ public class Block<T extends IData<T>> implements IRecord {
 
     @Override
     public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (T record : this.records) {
+            sb.append("\n").append(record);
+        }
+
         return "Block{" +
-                "records=" + records +
-                ", recordsCount=" + recordsCount +
+                "records=" + sb +
+                ",\nrecordsCount=" + this.records.size() +
                 ", validCount=" + validCount +
                 ", next=" + next +
                 ", previous=" + previous +

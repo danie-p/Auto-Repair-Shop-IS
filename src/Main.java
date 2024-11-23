@@ -14,22 +14,24 @@ public class Main {
                 new ServiceVisit(500, 500.0, "servis 5"),
                 new ServiceVisit(600, 600.0, "servis 6"),
         };
-        Customer customer = new Customer("Jozef", "Skusobny", visits);
+        Customer customer = new Customer(1234, "Jozef", "Skusobny", visits);
 
         ServiceVisit[] visits2 = new ServiceVisit[] {
                 new ServiceVisit(900, 900.0, "TOTO JE ALE SERVISssss 1"),
                 new ServiceVisit(800, 800.0, "TOTO JE ALE SERVIS 2"),
                 new ServiceVisit(700, 700.0, "TOTO JE ALE SERVIS 3")
         };
-        Customer customer2 = new Customer("Mia", "Testova", visits2);
+        Customer customer2 = new Customer(6789, "Mia", "Testova", visits2);
+        Customer customer3 = new Customer(5678, "Amelia", "Nejaka", visits);
+        Customer customer4 = new Customer(3456, "Peter", "Nejaky", visits2);
 
-        byte[] arr = customer2.getByteArray();
-        customer.fromByteArray(arr);
-        System.out.println(customer);
-
-        HeapFile<Customer> heapFile = new HeapFile<Customer>("hf1.dat", 1024, customer);
+        HeapFile<Customer> heapFile = new HeapFile<Customer>("hf1.dat", 500, customer);
         try {
             heapFile.insert(customer);
+            heapFile.insert(customer2);
+            heapFile.insert(customer3);
+            heapFile.insert(customer4);
+            heapFile.readSequentially();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

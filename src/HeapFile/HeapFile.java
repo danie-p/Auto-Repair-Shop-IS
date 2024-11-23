@@ -6,17 +6,17 @@ import java.io.RandomAccessFile;
 import java.util.Arrays;
 
 public class HeapFile<T extends IData<T>> {
-    private RandomAccessFile file;
+    private final RandomAccessFile file;
     // velkost bloku = velkost clustra
-    private int clusterSize;
+    private final int clusterSize;
     // velkost zaznamu dana instanciou prveho zaznamu pri vytvoreni
-    private int recordSize;
+    private final int recordSize;
     // adresa prveho ciastocne volneho bloku (zaciatok zretazenia ciastocne volnych blokov)
     private int partiallyEmpty;
     // adresa prveho uplne volneho bloku (zaciatok zretazenia uplne volnych blokov)
     private int fullyEmpty;
     private int blocksCount;
-    private T exampleRecord;
+    private final T exampleRecord;
 
     public HeapFile(String fileName, int clusterSize, T record) {
         this.exampleRecord = record;
@@ -34,9 +34,11 @@ public class HeapFile<T extends IData<T>> {
     }
 
     public void readSequentially() throws IOException {
-        for (int i = 0; i < blocksCount; i++) {
+        int i = 0;
+        while (i < this.file.length() / this.clusterSize) {
             Block<T> readBlock = this.readBlockFromFile(i);
             System.out.println("Block " + i + ":\n" + readBlock);
+            i++;
         }
     }
 
@@ -53,7 +55,7 @@ public class HeapFile<T extends IData<T>> {
     }
 
     private Block<T> readBlockFromFile(int blockIndex) throws IOException {
-        if (blockIndex >= this.blocksCount)
+        if (blockIndex >= this.blocksCount || blockIndex == -1)
             return null;
 
         long blockPosition = (long) blockIndex * this.clusterSize;
@@ -104,15 +106,15 @@ public class HeapFile<T extends IData<T>> {
                 if (blockToInsertInto.isFull()) {
                     // ak je po vlozeni plny ... odstran ho zo zretazenia ciastocne prazdnych blokov a nahrad ho nasledovnikom
                     this.partiallyEmpty = blockToInsertInto.getNext();
-// TODO               blockToInsertInto.setNext(-1);
-//                    nextBlock.setPrevious(-1);
+                    blockToInsertInto.setNext(-1);
+                    Block<T> nextBlock = this.readBlockFromFile(this.partiallyEmpty);
+                    if (nextBlock != null)
+                        nextBlock.setPrevious(-1);
                 }
                 // ak je aj po vlozeni stale ciastocne prazdny ... ostava ako prvy v zretazeni ciastocne prazdnych blokov, nic sa nemeni
-
             } else {
                 throw new IllegalStateException("Error inserting a record into a partially empty block!");
             }
-
         } else if (this.fullyEmpty != -1) {
             // ak v subore je nejaky plne volny blok
             indexOfBlockToInsertInto = this.fullyEmpty;
@@ -129,39 +131,47 @@ public class HeapFile<T extends IData<T>> {
                 if (blockToInsertInto.isFull()) {
                     // ak je po vlozeni plny ... odstran ho zo zretazenia plne prazdnych blokov a nahrad ho nasledovnikom
                     this.fullyEmpty = blockToInsertInto.getNext();
-// TODO               blockToInsertInto.setNext(-1);
-//                    nextBlock.setPrevious(-1);
+                    blockToInsertInto.setNext(-1);
+                    Block<T> nextBlock = this.readBlockFromFile(this.fullyEmpty);
+                    if (nextBlock != null)
+                        nextBlock.setPrevious(-1);
                 } else if (blockToInsertInto.isPartiallyEmpty()) {
                     // ak je po vlozeni ciastocne prazdny ... odstran ho zo zretazenia plne prazdnych blokov
                     this.fullyEmpty = blockToInsertInto.getNext();
                     // a pripoj ho do zretazenia ciastocne prazdnych blokov na PRVE miesto
                     // zretazenie ciastocne prazdnych blokov je doteraz urcite prazdne, kedze blok bol vlozeny az do plne volneho bloku
                     this.partiallyEmpty = indexOfBlockToInsertInto;
-// TODO               blockToInsertInto.setNext(-1);
-//                    nextBlock.setPrevious(-1);
+                    blockToInsertInto.setNext(-1);
+                    Block<T> nextBlock = this.readBlockFromFile(this.partiallyEmpty);
+                    if (nextBlock != null)
+                        nextBlock.setPrevious(-1);
                 }
-
             } else {
                 throw new IllegalStateException("Error inserting a record into a fully empty block!");
             }
-
         } else {
-            // inak pridaj novy blok na koniec suboru a don zapis data
+            // ak v subore nie je ziadny volny blok, pridaj novy blok na koniec suboru a don zapis data
             indexOfBlockToInsertInto = this.blocksCount;
 
             Block<T> blockToInsertInto = new Block<T>(this.clusterSize, record);
-            this.writeBlockIntoFile(indexOfBlockToInsertInto, blockToInsertInto);
+            if (blockToInsertInto.insertRecord(record)) {
+                this.writeBlockIntoFile(indexOfBlockToInsertInto, blockToInsertInto);
 
-            // po vlozeni zaznamu do noveho bloku moze byt tento blok ciastocne prazdny alebo plny
-            if (blockToInsertInto.isPartiallyEmpty()) {
-                // ak je po vlozeni ciastocne prazdny, pripoj ho do zretazenia ciastocne prazdnych blokov na PRVE miesto
-                // zretazenie ciastocne prazdnych blokov je doteraz urcite prazdne, kedze blok bol vlozeny az do noveho bloku
-                this.partiallyEmpty = indexOfBlockToInsertInto;
+                // po vlozeni zaznamu do noveho bloku moze byt tento blok ciastocne prazdny alebo plny
+                if (blockToInsertInto.isPartiallyEmpty()) {
+                    // ak je po vlozeni ciastocne prazdny, pripoj ho do zretazenia ciastocne prazdnych blokov na PRVE miesto
+                    // zretazenie ciastocne prazdnych blokov je doteraz urcite prazdne, kedze blok bol vlozeny az do noveho bloku
+                    this.partiallyEmpty = indexOfBlockToInsertInto;
+                }
+                // ak sa novy blok vlozenim jedneho zaznamu hned uplne zaplni, netreba robit ziadny manazment volnych blokov
+
+                this.blocksCount++;
+            } else {
+                throw new IllegalStateException("Error inserting a record into a new empty block!");
             }
-            // ak sa novy blok vlozenim jedneho zaznamu hned uplne zaplni, netreba menit ziadne referencie
         }
 
-        return 0;
+        return indexOfBlockToInsertInto;
     }
 
     /**
@@ -180,5 +190,12 @@ public class HeapFile<T extends IData<T>> {
      */
     public int delete(int blockAddress, T dataWithKey) {
         return 0;
+    }
+
+    /**
+     * Metóda na zatvorenie súboru.
+     */
+    public void close() {
+
     }
 }

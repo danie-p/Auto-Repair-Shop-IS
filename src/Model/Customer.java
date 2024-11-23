@@ -15,7 +15,9 @@ public class Customer implements IData<Customer> {
     private byte surnameLength;
     private byte serviceVisitsCount;
 
-    public Customer(String name, String surname, ServiceVisit[] serviceVisits) {
+    public Customer(int ID, String name, String surname, ServiceVisit[] serviceVisits) {
+        this.ID = ID;
+
         this.name = StringProcessing.initStringAttribute(name, Constants.maxCustomerNameLength);
         this.nameLength = (byte) this.name.length();
 
@@ -41,7 +43,7 @@ public class Customer implements IData<Customer> {
 
     @Override
     public Customer createClass() {
-        return new Customer("", "", null);
+        return new Customer(0, "", "", null);
     }
 
     @Override
