@@ -2,7 +2,7 @@ package Model;
 
 import HeapFile.IData;
 import Tools.Constants;
-import Tools.StringProcessing;
+import Tools.StringProcessor;
 
 import java.io.*;
 
@@ -18,10 +18,10 @@ public class Customer implements IData<Customer> {
     public Customer(int ID, String name, String surname, ServiceVisit[] serviceVisits) {
         this.ID = ID;
 
-        this.name = StringProcessing.initStringAttribute(name, Constants.maxCustomerNameLength);
+        this.name = StringProcessor.initStringAttribute(name, Constants.maxCustomerNameLength);
         this.nameLength = (byte) this.name.length();
 
-        this.surname = StringProcessing.initStringAttribute(surname, Constants.maxCustomerSurnameLength);
+        this.surname = StringProcessor.initStringAttribute(surname, Constants.maxCustomerSurnameLength);
         this.surnameLength = (byte) this.surname.length();
 
         for (int i = 0; i < Constants.maxCustomerServiceVisitsCount; i++) {
@@ -71,11 +71,11 @@ public class Customer implements IData<Customer> {
             outStream.writeByte(this.surnameLength);
             outStream.writeByte(this.serviceVisitsCount);
 
-            byte[] nameBytes = StringProcessing.stringAttributeToByteArray(this.name, Constants.maxCustomerNameLength, this.nameLength);
+            byte[] nameBytes = StringProcessor.stringAttributeToByteArray(this.name, Constants.maxCustomerNameLength, this.nameLength);
             // zapis pole bajtov o fixnej dlzke (max dlzke mena)
             outStream.write(nameBytes);
 
-            byte[] surnameBytes = StringProcessing.stringAttributeToByteArray(this.surname, Constants.maxCustomerSurnameLength, this.surnameLength);
+            byte[] surnameBytes = StringProcessor.stringAttributeToByteArray(this.surname, Constants.maxCustomerSurnameLength, this.surnameLength);
             // zapis pole bajtov o fixnej dlzke (max dlzke priezviska)
             outStream.write(surnameBytes);
 
@@ -107,11 +107,11 @@ public class Customer implements IData<Customer> {
 
             byte[] nameBytes = new byte[Constants.maxCustomerNameLength];
             inStream.readFully(nameBytes);
-            this.name = StringProcessing.byteArrayToStringAttribute(nameBytes, this.nameLength);
+            this.name = StringProcessor.byteArrayToStringAttribute(nameBytes, this.nameLength);
 
             byte[] surnameBytes = new byte[Constants.maxCustomerSurnameLength];
             inStream.readFully(surnameBytes);
-            this.surname = StringProcessing.byteArrayToStringAttribute(surnameBytes, this.surnameLength);
+            this.surname = StringProcessor.byteArrayToStringAttribute(surnameBytes, this.surnameLength);
 
             this.ID = inStream.readInt();
         } catch (IOException e) {

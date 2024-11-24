@@ -3,7 +3,9 @@ package HeapFile;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 
 public class HeapFile<T extends IData<T>> {
     private final RandomAccessFile file;
@@ -40,6 +42,26 @@ public class HeapFile<T extends IData<T>> {
             System.out.println("Block " + i + ":\n" + readBlock);
             i++;
         }
+    }
+
+    /**
+     * Metóda slúži len pre potreby testovania štruktúry HeapFile. Sprístupňuje všetky záznamy uložené v HeapFile.
+     * @return HashSet všetkých záznamov uložených v HeapFile
+     */
+    public HashSet<T> getAllDataInHeapFile() throws IOException {
+        HashSet<T> allDataSet = new HashSet<>();
+
+        int i = 0;
+        while (i < this.file.length() / this.clusterSize) {
+            Block<T> readBlock = this.readBlockFromFile(i);
+            if (readBlock != null) {
+                ArrayList<T> validRecords = readBlock.getValidRecords();
+                allDataSet.addAll(validRecords);
+            }
+            i++;
+        }
+
+        return allDataSet;
     }
 
     private void writeBlockIntoFile(int blockIndex, Block<T> block) throws IOException {
@@ -107,6 +129,7 @@ public class HeapFile<T extends IData<T>> {
                     // ak je po vlozeni plny ... odstran ho zo zretazenia ciastocne prazdnych blokov a nahrad ho nasledovnikom
                     this.partiallyEmpty = blockToInsertInto.getNext();
                     blockToInsertInto.setNext(-1);
+                    this.writeBlockIntoFile(indexOfBlockToInsertInto, blockToInsertInto);
 
                     // aktualizuj nahradnika
                     Block<T> nextBlock = this.readBlockFromFile(this.partiallyEmpty);
@@ -136,6 +159,7 @@ public class HeapFile<T extends IData<T>> {
                     // ak je po vlozeni plny ... odstran ho zo zretazenia plne prazdnych blokov a nahrad ho nasledovnikom
                     this.fullyEmpty = blockToInsertInto.getNext();
                     blockToInsertInto.setNext(-1);
+                    this.writeBlockIntoFile(indexOfBlockToInsertInto, blockToInsertInto);
 
                     // aktualizuj nahradnika
                     Block<T> nextBlock = this.readBlockFromFile(this.fullyEmpty);
@@ -150,6 +174,7 @@ public class HeapFile<T extends IData<T>> {
                     // zretazenie ciastocne prazdnych blokov je doteraz urcite prazdne, kedze blok bol vlozeny az do plne volneho bloku
                     this.partiallyEmpty = indexOfBlockToInsertInto;
                     blockToInsertInto.setNext(-1);
+                    this.writeBlockIntoFile(indexOfBlockToInsertInto, blockToInsertInto);
 
                     // aktualizuj nahradnika
                     Block<T> nextBlock = this.readBlockFromFile(this.partiallyEmpty);
@@ -207,7 +232,7 @@ public class HeapFile<T extends IData<T>> {
         }
 
         if (blockAddress >= this.blocksCount || blockAddress < 0) {
-            throw new IllegalArgumentException("Searched block address out of range!");
+            return null;
         }
 
         return this.readBlockFromFile(blockAddress);
@@ -233,35 +258,9 @@ public class HeapFile<T extends IData<T>> {
             if (foundBlock.isPartiallyEmpty()) {
                 // ak blok ostane po vymazani zaznamu ciastocne prazdny, pridaj ho do zretazenia ciastocne prazdnych blokov (na zaciatok)
                 this.setFirstBlockInChain(blockAddress, foundBlock, true);
-
-                /*
-                // 1. aktualizuj aktualne prvy blok
-                Block<T> firstPartiallyEmptyBlock = this.readBlockFromFile(this.partiallyEmpty);
-                if (firstPartiallyEmptyBlock != null) {
-                    firstPartiallyEmptyBlock.setPrevious(blockAddress);
-                    this.writeBlockIntoFile(this.partiallyEmpty, firstPartiallyEmptyBlock);
-                }
-
-                // 2. aktualizuj blok, z ktoreho sa mazal zaznam
-                foundBlock.setNext(this.partiallyEmpty);
-                this.writeBlockIntoFile(blockAddress, foundBlock);
-
-                // 3. aktualizuj zaciatok zretazenia
-                this.partiallyEmpty = blockAddress;
-                 */
-            } else if (foundBlock.isFullyEmpty()) {
+            } else {
+                // ak blok ostane po vymazani zaznamu prazdny
                 this.manageFullyEmptyBlock(blockAddress, foundBlock);
-
-                /*
-                // ak blok ostane po vymazani zaznamu prazdny (ked blok udrzi len 1 zaznam), skontroluj, ci nie je na konci suboru
-                if (blockAddress == this.blocksCount - 1) {
-                    // prazdny blok je na konci suboru, blok uvolni skratenim suboru a cyklicky skontroluj aj predosle
-                    this.removeFullyEmptyBlocksFromEnd();
-                } else {
-                    // ak nie je na konci suboru, pridaj ho do zretazenia uplne prazdnych blokov (na zaciatok)
-                    this.setFirstBlockInChain(blockAddress, foundBlock, false);
-                }
-                 */
             }
         } else {
             // ak bol blok pred vymazanim zaznamu ciastocne prazdny
@@ -270,20 +269,12 @@ public class HeapFile<T extends IData<T>> {
             if (foundBlock.isFullyEmpty()) {
                 // odstran zo zretazenia ciastocne prazdnych blokov
                 this.removeEmptyBlockFromChain(blockAddress, foundBlock, true);
-
                 this.manageFullyEmptyBlock(blockAddress, foundBlock);
-                /*
-                // ak blok po vymazani zaznamu ostane uplne prazdny, skontroluj, ci nie je na konci suboru
-                if (blockAddress == this.blocksCount - 1) {
-                    // prazdny blok je na konci suboru, blok uvolni skratenim suboru a cyklicky skontroluj aj predosle
-                    this.removeFullyEmptyBlocksFromEnd();
-                } else {
-                    // ak nie je na konci suboru, pridaj ho do zretazenia uplne prazdnych blokov (na zaciatok)
-                    this.setFirstBlockInChain(blockAddress, foundBlock, false);
-                }
-                 */
+            } else {
+                // inak ak blok po vymazani zaznamu stale ostane ciastocne prazdny, netreba robit manazment volnych blokov
+                // ale je potrebne aktualizovat obsah bloku, z ktoreho sa vymazal zaznam
+                this.writeBlockIntoFile(blockAddress, foundBlock);
             }
-            // inak ak blok po vymazani zaznamu stale ostane ciastocne prazdny, netreba robit manazment volnych blokov
         }
 
         return deletedRecord;
@@ -312,6 +303,7 @@ public class HeapFile<T extends IData<T>> {
 
         // 2. aktualizuj blok, z ktoreho sa mazal zaznam
         block.setNext(currentFirst);
+        block.setPrevious(-1);
         this.writeBlockIntoFile(blockAddress, block);
 
         // 3. aktualizuj zaciatok zretazenia
@@ -332,31 +324,6 @@ public class HeapFile<T extends IData<T>> {
         while (newLastBlock != null && newLastBlock.isFullyEmpty()) {
             // odstran blok zo zretazenia uplne prazdnych blokov
             this.removeEmptyBlockFromChain(this.blocksCount - 1, newLastBlock, false);
-
-            /*
-            // odstran blok zo zretazenia uplne prazdnych blokov
-            // 1. aktualizuj nasledovnika
-            int next = newLastBlock.getNext();
-            Block<T> nextBlock = this.readBlockFromFile(next);
-            if (nextBlock != null) {
-                // zretaz ho s predchodcom
-                nextBlock.setPrevious(newLastBlock.getPrevious());
-                this.writeBlockIntoFile(next, nextBlock);
-            }
-
-            // 2. aktualizuj predchodcu
-            int previous = newLastBlock.getPrevious();
-            Block<T> previousBlock = this.readBlockFromFile(previous);
-            if (previousBlock != null) {
-                // zretaz ho s nasledovnikom
-                previousBlock.setNext(newLastBlock.getNext());
-                this.writeBlockIntoFile(previous, previousBlock);
-            }
-
-            // ak bol prvy v zretazeni, nastav novy prvy
-            if (this.fullyEmpty == blocksCount - 1)
-                this.fullyEmpty = next;
-             */
 
             // uvolni prazdny blok na konci
             this.file.setLength(this.file.length() - this.clusterSize);

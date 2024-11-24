@@ -1,0 +1,41 @@
+package Tools;
+
+import java.util.Random;
+
+public class StringGenerator {
+    private static long uniqueStringCounter = 0;
+
+    public static String generateRandomString(int minLength, int maxLength) {
+        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        Random random = new Random();
+        int lengthOfString = random.nextInt(maxLength - minLength + 1) + minLength;
+        StringBuilder randomString = new StringBuilder();
+
+        while (randomString.length() < lengthOfString) {
+            int randomIndex = random.nextInt(characters.length());
+            char character = characters.charAt(randomIndex);
+            randomString.append(character);
+        }
+
+        return randomString.toString();
+    }
+
+    public static String generateUniqueString(int maxLength) {
+        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+        long currCounter = StringGenerator.uniqueStringCounter++;
+        StringBuilder uniqueString = new StringBuilder();
+
+        while (currCounter > 0) {
+            int remainder = (int) (currCounter % characters.length());
+            uniqueString.append(characters.charAt(remainder));
+            currCounter /= characters.length();
+        }
+
+        while (uniqueString.length() < maxLength) {
+            uniqueString.append('A');
+        }
+
+        return uniqueString.reverse().toString();
+    }
+}

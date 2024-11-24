@@ -21,6 +21,14 @@ public class Block<T extends IData<T>> implements IRecord {
         this.previous = -1;
     }
 
+    public ArrayList<T> getValidRecords() {
+        ArrayList<T> validRecords = new ArrayList<>();
+        for (int i = 0; i < this.validCount; i++) {
+            validRecords.add(this.records.get(i));
+        }
+        return validRecords;
+    }
+
     public boolean isPartiallyEmpty() {
         return this.validCount > 0 && this.validCount < this.records.size();
     }
@@ -177,7 +185,7 @@ public class Block<T extends IData<T>> implements IRecord {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         for (T record : this.records) {
-            sb.append("\n").append(record);
+            sb.append("\n\t").append(record);
         }
 
         return "Block{" +

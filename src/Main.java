@@ -1,11 +1,20 @@
 import HeapFile.HeapFile;
 import Model.Customer;
 import Model.ServiceVisit;
+import Testing.Tester;
 
 import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) {
+        Tester tester = new Tester();
+        try {
+            tester.runTestOnVehicle("b.dat", 1000);
+        } catch (IOException e) {
+            throw new RuntimeException("Error during test run!" + e);
+        }
+
+        /*
         ServiceVisit[] visits = new ServiceVisit[] {
                 new ServiceVisit(100, 100.0, "servisttthervavehrehshtqtv 1"),
                 new ServiceVisit(200, 200.0, "servis 2"),
@@ -31,9 +40,25 @@ public class Main {
             heapFile.insert(customer2);
             heapFile.insert(customer3);
             heapFile.insert(customer4);
+            heapFile.delete(0, customer2);
+            heapFile.delete(0, customer);
+            heapFile.insert(customer);
+            heapFile.insert(customer2);
+            heapFile.insert(customer);
+            heapFile.insert(customer2);
+            heapFile.delete(0, customer);
+            heapFile.delete(1, customer3);
+            heapFile.insert(customer2);
+            heapFile.delete(2, customer);
+            heapFile.delete(1, customer4);
+            heapFile.delete(1, customer2);
+            heapFile.delete(0, customer2);
+            heapFile.insert(customer);
+
             heapFile.readSequentially();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+         */
     }
 }

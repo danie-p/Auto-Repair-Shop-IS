@@ -2,7 +2,7 @@ package Tools;
 
 import java.nio.charset.StandardCharsets;
 
-public class StringProcessing {
+public class StringProcessor {
     public static String initStringAttribute(String argument, int maxStringLength) {
         if (argument.length() > maxStringLength)
             return argument.substring(0, maxStringLength);

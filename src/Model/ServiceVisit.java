@@ -1,22 +1,22 @@
 package Model;
 
 import Tools.Constants;
-import Tools.StringProcessing;
+import Tools.StringProcessor;
 
 import java.io.*;
+import java.util.Objects;
 
 public class ServiceVisit {
     private int date;
     private double price;
     private String desc;
     private byte descLength;
-    private int ID;
 
     public ServiceVisit(int date, double price, String desc) {
         this.date = date;
         this.price = price;
 
-        this.desc = StringProcessing.initStringAttribute(desc, Constants.maxServiceVisitDescLength);
+        this.desc = StringProcessor.initStringAttribute(desc, Constants.maxServiceVisitDescLength);
         this.descLength = (byte) this.desc.length();
     }
 
@@ -34,11 +34,9 @@ public class ServiceVisit {
             outStream.writeInt(this.date);
             outStream.writeDouble(this.price);
 
-            byte[] descBytes = StringProcessing.stringAttributeToByteArray(this.desc, Constants.maxServiceVisitDescLength, this.descLength);
+            byte[] descBytes = StringProcessor.stringAttributeToByteArray(this.desc, Constants.maxServiceVisitDescLength, this.descLength);
             // zapis pole bajtov o fixnej dlzke (max dlzke popisu)
             outStream.write(descBytes);
-
-            outStream.writeInt(this.ID);
 
             return byteArrayOutputStream.toByteArray();
         } catch (IOException e) {
@@ -58,9 +56,7 @@ public class ServiceVisit {
             // precitaj pole bajtov o fixnej dlzke (max dlzke popisu)
             byte[] descBytes = new byte[Constants.maxServiceVisitDescLength];
             inStream.readFully(descBytes);
-            this.desc = StringProcessing.byteArrayToStringAttribute(descBytes, this.descLength);
-
-            this.ID = inStream.readInt();
+            this.desc = StringProcessor.byteArrayToStringAttribute(descBytes, this.descLength);
         } catch (IOException e) {
             throw new IllegalStateException("Error during conversion from byte array!");
         }
@@ -73,7 +69,21 @@ public class ServiceVisit {
                 ", price=" + price +
                 ", desc='" + desc + '\'' +
                 ", descLength=" + descLength +
-                ", ID=" + ID +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ServiceVisit serviceVisit)) return false;
+        return date == serviceVisit.date &&
+                Double.compare(price, serviceVisit.price) == 0 &&
+                descLength == serviceVisit.descLength &&
+                desc.equals(serviceVisit.desc);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(date, price, desc, descLength);
     }
 }
