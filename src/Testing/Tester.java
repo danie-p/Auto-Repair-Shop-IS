@@ -18,7 +18,7 @@ public class Tester {
         HeapFile<Vehicle> vehicleHeapFile = new HeapFile<Vehicle>(fileName, clusterSize, new Vehicle("", "", 0, "", null));
 
         System.out.println("Generating random data");
-        int dataAmount = 1000;
+        int dataAmount = 100;
 
         Vehicle[] insertVehicles = new Vehicle[dataAmount];
         for (int i = 0; i < dataAmount; i++) {

@@ -1,3 +1,4 @@
+import ExtendibleHashFile.ExtendibleHashFile;
 import HeapFile.HeapFile;
 import Model.Customer;
 import Model.ServiceVisit;
@@ -7,12 +8,14 @@ import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) {
+
         Tester tester = new Tester();
         try {
-            tester.runTestOnVehicle("b.dat", 1000);
+            tester.runTestOnVehicle("test", 500);
         } catch (IOException e) {
             throw new RuntimeException("Error during test run!" + e);
         }
+
 
         /*
         ServiceVisit[] visits = new ServiceVisit[] {
@@ -34,7 +37,7 @@ public class Main {
         Customer customer3 = new Customer(5678, "Amelia", "Nejaka", visits);
         Customer customer4 = new Customer(3456, "Peter", "Nejaky", visits2);
 
-        HeapFile<Customer> heapFile = new HeapFile<Customer>("hf1.dat", 500, customer);
+        HeapFile<Customer> heapFile = new HeapFile<Customer>("hf1", 500, customer);
         try {
             heapFile.insert(customer);
             heapFile.insert(customer2);
@@ -56,6 +59,20 @@ public class Main {
             heapFile.insert(customer);
 
             heapFile.readSequentially();
+
+            heapFile.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        */
+
+        /*
+        ExtendibleHashFile<Customer> extendibleHashFile = new ExtendibleHashFile<Customer>("a.dat", 500, customer);
+        try {
+            extendibleHashFile.insert(customer);
+            extendibleHashFile.insert(customer2);
+            extendibleHashFile.insert(customer3);
+            extendibleHashFile.readSequentially();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

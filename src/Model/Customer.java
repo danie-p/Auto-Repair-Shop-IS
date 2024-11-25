@@ -1,10 +1,12 @@
 package Model;
 
 import HeapFile.IData;
+import Tools.BitSetUtility;
 import Tools.Constants;
 import Tools.StringProcessor;
 
 import java.io.*;
+import java.util.BitSet;
 
 public class Customer implements IData<Customer> {
     private ServiceVisit[] serviceVisits = new ServiceVisit[5];
@@ -49,6 +51,11 @@ public class Customer implements IData<Customer> {
     @Override
     public boolean isEqualTo(Customer other) {
         return this.ID == other.ID;
+    }
+
+    @Override
+    public BitSet getHash() {
+        return BitSetUtility.intToBitSet(this.ID);
     }
 
     @Override

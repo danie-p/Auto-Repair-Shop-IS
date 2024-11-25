@@ -1,11 +1,13 @@
 package Model;
 
 import HeapFile.IData;
+import Tools.BitSetUtility;
 import Tools.Constants;
 import Tools.StringProcessor;
 
 import java.io.*;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Objects;
 
 public class Vehicle implements IData<Vehicle> {
@@ -56,6 +58,11 @@ public class Vehicle implements IData<Vehicle> {
     @Override
     public boolean isEqualTo(Vehicle other) {
         return this.customerID == other.customerID && this.licensePlateCode.equals(other.licensePlateCode);
+    }
+
+    @Override
+    public BitSet getHash() {
+        return BitSetUtility.intToBitSet(this.customerID);
     }
 
     @Override

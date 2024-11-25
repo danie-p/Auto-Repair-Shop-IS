@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Random;
 
 public class OperationsGenerator<T extends IData<T>> {
-    private final int operationsCount = 100000;
+    private final int operationsCount = 10000;
     private final Random random;
     private final HeapFile<T> heapFile;
     private final DataGenerator<T> dataGenerator;

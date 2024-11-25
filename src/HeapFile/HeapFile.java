@@ -1,8 +1,6 @@
 package HeapFile;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -10,15 +8,16 @@ import java.util.HashSet;
 public class HeapFile<T extends IData<T>> {
     private final RandomAccessFile file;
     // velkost bloku = velkost clustra
-    private final int clusterSize;
+    protected final int clusterSize;
     // velkost zaznamu dana instanciou prveho zaznamu pri vytvoreni
     private final int recordSize;
     // adresa prveho ciastocne volneho bloku (zaciatok zretazenia ciastocne volnych blokov)
     private int partiallyEmpty;
     // adresa prveho uplne volneho bloku (zaciatok zretazenia uplne volnych blokov)
     private int fullyEmpty;
-    private int blocksCount;
-    private final T exampleRecord;
+    protected int blocksCount;
+    protected final T exampleRecord;
+    private final String fileName;
 
     public HeapFile(String fileName, int clusterSize, T record) {
         this.exampleRecord = record;
@@ -27,9 +26,10 @@ public class HeapFile<T extends IData<T>> {
         this.blocksCount = 0;
         this.partiallyEmpty = -1;
         this.fullyEmpty = -1;
+        this.fileName = fileName;
 
         try {
-            this.file = new RandomAccessFile(fileName, "rw");
+            this.file = new RandomAccessFile(fileName + ".dat", "rw");
         } catch (FileNotFoundException e) {
             throw new RuntimeException("Error during file opening!");
         }
@@ -64,9 +64,9 @@ public class HeapFile<T extends IData<T>> {
         return allDataSet;
     }
 
-    private void writeBlockIntoFile(int blockIndex, Block<T> block) throws IOException {
+    protected void writeBlockIntoFile(int blockAddress, Block<T> block) throws IOException {
         // seek na adresu zapisovaneho bloku
-        this.file.seek((long) blockIndex * this.clusterSize);
+        this.file.seek((long) blockAddress * this.clusterSize);
 
         // ak blok (jeho atributy validCount, next, prev a vsetky zaznamy) skutocne nevyplni celu velkost clustra,
         // umelo dopln bajty do plnej velkosti clustra ... defaultne hodnoty (0) zaplnaju zvysne nevyuzitelne miesto
@@ -76,11 +76,11 @@ public class HeapFile<T extends IData<T>> {
         this.file.write(blockBytes);
     }
 
-    private Block<T> readBlockFromFile(int blockIndex) throws IOException {
-        if (blockIndex >= this.blocksCount || blockIndex < 0)
+    protected Block<T> readBlockFromFile(int blockAddress) throws IOException {
+        if (blockAddress >= this.blocksCount || blockAddress < 0)
             return null;
 
-        long blockPosition = (long) blockIndex * this.clusterSize;
+        long blockPosition = (long) blockAddress * this.clusterSize;
 
         // tato kontrola mozno uz ani nie je potrebna
         if (blockPosition >= this.file.length())
@@ -102,8 +102,8 @@ public class HeapFile<T extends IData<T>> {
     }
 
     /**
-     * @param record vkladané dáta
-     * @return adresa bloku, do ktorého sa vložili dáta
+     * @param record vkladaný záznam
+     * @return adresa bloku, do ktorého sa vložil záznam
      */
     public int insert(T record) throws IOException {
         if (record.getSize() != this.recordSize) {
@@ -121,15 +121,11 @@ public class HeapFile<T extends IData<T>> {
 
             // pokus sa zapisat zaznam do precitaneho bloku
             if (blockToInsertInto != null && blockToInsertInto.insertRecord(record)) {
-                // zapis blok s vlozenym zaznamom do suboru
-                this.writeBlockIntoFile(indexOfBlockToInsertInto, blockToInsertInto);
-
                 // po vlozeni zaznamu do ciastocne prazdneho bloku moze byt tento blok ciastocne prazdny alebo plny
                 if (blockToInsertInto.isFull()) {
                     // ak je po vlozeni plny ... odstran ho zo zretazenia ciastocne prazdnych blokov a nahrad ho nasledovnikom
                     this.partiallyEmpty = blockToInsertInto.getNext();
                     blockToInsertInto.setNext(-1);
-                    this.writeBlockIntoFile(indexOfBlockToInsertInto, blockToInsertInto);
 
                     // aktualizuj nahradnika
                     Block<T> nextBlock = this.readBlockFromFile(this.partiallyEmpty);
@@ -138,7 +134,10 @@ public class HeapFile<T extends IData<T>> {
                         this.writeBlockIntoFile(this.partiallyEmpty, nextBlock);
                     }
                 }
-                // ak je aj po vlozeni stale ciastocne prazdny ... ostava ako prvy v zretazeni ciastocne prazdnych blokov, nic sa nemeni
+                // inak je aj po vlozeni stale ciastocne prazdny ... ostava ako prvy v zretazeni ciastocne prazdnych blokov, nic sa nemeni
+
+                // zapis blok s vlozenym zaznamom do suboru
+                this.writeBlockIntoFile(indexOfBlockToInsertInto, blockToInsertInto);
             } else {
                 throw new IllegalStateException("Error inserting a record into a partially empty block!");
             }
@@ -151,15 +150,11 @@ public class HeapFile<T extends IData<T>> {
 
             // pokus sa zapisat zaznam do precitaneho bloku
             if (blockToInsertInto != null && blockToInsertInto.insertRecord(record)) {
-                // zapis blok s vlozenym zaznamom do suboru
-                this.writeBlockIntoFile(indexOfBlockToInsertInto, blockToInsertInto);
-
                 // po vlozeni zaznamu do plne prazdneho bloku moze byt tento blok ciastocne prazdny alebo plny
                 if (blockToInsertInto.isFull()) {
                     // ak je po vlozeni plny ... odstran ho zo zretazenia plne prazdnych blokov a nahrad ho nasledovnikom
                     this.fullyEmpty = blockToInsertInto.getNext();
                     blockToInsertInto.setNext(-1);
-                    this.writeBlockIntoFile(indexOfBlockToInsertInto, blockToInsertInto);
 
                     // aktualizuj nahradnika
                     Block<T> nextBlock = this.readBlockFromFile(this.fullyEmpty);
@@ -167,14 +162,13 @@ public class HeapFile<T extends IData<T>> {
                         nextBlock.setPrevious(-1);
                         this.writeBlockIntoFile(this.fullyEmpty, nextBlock);
                     }
-                } else if (blockToInsertInto.isPartiallyEmpty()) {
+                } else {
                     // ak je po vlozeni ciastocne prazdny ... odstran ho zo zretazenia plne prazdnych blokov
                     this.fullyEmpty = blockToInsertInto.getNext();
                     // a pripoj ho do zretazenia ciastocne prazdnych blokov na PRVE miesto
                     // zretazenie ciastocne prazdnych blokov je doteraz urcite prazdne, kedze blok bol vlozeny az do plne volneho bloku
                     this.partiallyEmpty = indexOfBlockToInsertInto;
                     blockToInsertInto.setNext(-1);
-                    this.writeBlockIntoFile(indexOfBlockToInsertInto, blockToInsertInto);
 
                     // aktualizuj nahradnika
                     Block<T> nextBlock = this.readBlockFromFile(this.partiallyEmpty);
@@ -183,6 +177,8 @@ public class HeapFile<T extends IData<T>> {
                         this.writeBlockIntoFile(this.partiallyEmpty, nextBlock);
                     }
                 }
+                // zapis blok s vlozenym zaznamom do suboru
+                this.writeBlockIntoFile(indexOfBlockToInsertInto, blockToInsertInto);
             } else {
                 throw new IllegalStateException("Error inserting a record into a fully empty block!");
             }
@@ -364,8 +360,26 @@ public class HeapFile<T extends IData<T>> {
     /**
      * Metóda na zatvorenie súboru. Je potrebné ju zavolať pre korektné ukončenie práce so súborom.
      */
-    public void close() throws IOException {
-        // TODO: trvalo uloz riadiace informacie
-        this.file.close();
+    public void close() {
+        String controlInfoFileName = this.fileName + ".txt";
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(controlInfoFileName))) {
+            writer.write("Cluster_size: " + this.clusterSize);
+            writer.newLine();
+            writer.write("Partially_empty: " + this.partiallyEmpty);
+            writer.newLine();
+            writer.write("Fully_empty: " + this.fullyEmpty);
+            writer.newLine();
+            writer.write("Blocks_count: " + this.blocksCount);
+            writer.newLine();
+        } catch (IOException e) {
+            throw new RuntimeException("Error during writing control information into a text file!");
+        }
+
+        try {
+            this.file.close();
+        } catch (IOException e) {
+            throw new RuntimeException("Error during heap file closing!");
+        }
     }
 }
