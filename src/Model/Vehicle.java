@@ -1,6 +1,6 @@
 package Model;
 
-import HeapFile.IData;
+import FileDataStructure.IData;
 import Tools.BitSetUtility;
 import Tools.Constants;
 import Tools.StringProcessor;
@@ -57,13 +57,14 @@ public class Vehicle implements IData<Vehicle> {
 
     @Override
     public boolean isEqualTo(Vehicle other) {
-        return this.customerID == other.customerID && this.licensePlateCode.equals(other.licensePlateCode);
+        // postacuje, aby sa rovnal jeden z unikatnych klucov
+        return this.customerID == other.customerID || this.licensePlateCode.equals(other.licensePlateCode);
     }
 
-    @Override
+    /*@Override
     public BitSet getHash() {
         return BitSetUtility.intToBitSet(this.customerID);
-    }
+    }*/
 
     @Override
     public int getSize() {
@@ -180,5 +181,13 @@ public class Vehicle implements IData<Vehicle> {
         int result = Objects.hash(customerName, customerSurname, licensePlateCode, customerID, customerNameLength, customerSurnameLength, licensePlateCodeLength, serviceVisitsCount);
         result = 31 * result + Arrays.hashCode(serviceVisits);
         return result;
+    }
+
+    public String getLicensePlateCode() {
+        return licensePlateCode;
+    }
+
+    public int getCustomerID() {
+        return customerID;
     }
 }

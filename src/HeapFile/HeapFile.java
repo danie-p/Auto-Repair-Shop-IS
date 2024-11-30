@@ -1,47 +1,18 @@
 package HeapFile;
 
+import FileDataStructure.*;
+
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 
-public class HeapFile<T extends IData<T>> {
-    private final RandomAccessFile file;
-    // velkost bloku = velkost clustra
-    protected final int clusterSize;
-    // velkost zaznamu dana instanciou prveho zaznamu pri vytvoreni
-    private final int recordSize;
+public class HeapFile<T extends IData<T>> extends FileDataStructure<T> {
     // adresa prveho ciastocne volneho bloku (zaciatok zretazenia ciastocne volnych blokov)
     private int partiallyEmpty;
-    // adresa prveho uplne volneho bloku (zaciatok zretazenia uplne volnych blokov)
-    private int fullyEmpty;
-    protected int blocksCount;
-    protected final T exampleRecord;
-    private final String fileName;
 
     public HeapFile(String fileName, int clusterSize, T record) {
-        this.exampleRecord = record;
-        this.clusterSize = clusterSize;
-        this.recordSize = record.getSize();
-        this.blocksCount = 0;
+        super(fileName, clusterSize, record);
         this.partiallyEmpty = -1;
-        this.fullyEmpty = -1;
-        this.fileName = fileName;
-
-        try {
-            this.file = new RandomAccessFile(fileName + ".dat", "rw");
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException("Error during file opening!");
-        }
-    }
-
-    public void readSequentially() throws IOException {
-        int i = 0;
-        while (i < this.file.length() / this.clusterSize) {
-            Block<T> readBlock = this.readBlockFromFile(i);
-            System.out.println("Block " + i + ":\n" + readBlock);
-            i++;
-        }
     }
 
     /**
@@ -62,43 +33,6 @@ public class HeapFile<T extends IData<T>> {
         }
 
         return allDataSet;
-    }
-
-    protected void writeBlockIntoFile(int blockAddress, Block<T> block) throws IOException {
-        // seek na adresu zapisovaneho bloku
-        this.file.seek((long) blockAddress * this.clusterSize);
-
-        // ak blok (jeho atributy validCount, next, prev a vsetky zaznamy) skutocne nevyplni celu velkost clustra,
-        // umelo dopln bajty do plnej velkosti clustra ... defaultne hodnoty (0) zaplnaju zvysne nevyuzitelne miesto
-        byte[] blockBytes = Arrays.copyOf(block.getByteArray(), this.clusterSize);
-
-        // do suboru sa zapise zapisovany blok prekonvertovany na pole bajtov (serializovane data) + doplnene bajty
-        this.file.write(blockBytes);
-    }
-
-    protected Block<T> readBlockFromFile(int blockAddress) throws IOException {
-        if (blockAddress >= this.blocksCount || blockAddress < 0)
-            return null;
-
-        long blockPosition = (long) blockAddress * this.clusterSize;
-
-        // tato kontrola mozno uz ani nie je potrebna
-        if (blockPosition >= this.file.length())
-            return null;
-
-        // seek na adresu citaneho bloku
-        this.file.seek(blockPosition);
-        // nove pole bajtov o velkosti clustra
-        byte[] blockBytes = new byte[this.clusterSize];
-        // do pola bajtov sa nacitaju data zo suboru (o rozsahu citaneho bloku)
-        this.file.readFully(blockBytes);
-
-        Block<T> readBlock = new Block<T>(this.clusterSize, this.exampleRecord);
-        // do noveho bloku sa nacitaju data z pola bajtov = deserializacia
-        readBlock.fromByteArray(blockBytes);
-
-        // vrat blok s precitanymi datami
-        return readBlock;
     }
 
     /**
@@ -213,7 +147,7 @@ public class HeapFile<T extends IData<T>> {
      * @return nájdený záznam
      */
     public T get(int blockAddress, T recordWithKey) throws IOException {
-        Block<T> foundBlock = this.getBlockWithRecord(blockAddress, recordWithKey);
+        Block<T> foundBlock = this.readBlockWithRecord(blockAddress, recordWithKey);
 
         if (foundBlock == null)
             return null;
@@ -222,7 +156,7 @@ public class HeapFile<T extends IData<T>> {
         return foundBlock.getRecord(recordWithKey);
     }
 
-    private Block<T> getBlockWithRecord(int blockAddress, T recordWithKey) throws IOException {
+    private Block<T> readBlockWithRecord(int blockAddress, T recordWithKey) throws IOException {
         if (recordWithKey.getSize() != this.recordSize) {
             throw new IllegalArgumentException("Incorrect size of searched record!");
         }
@@ -240,7 +174,7 @@ public class HeapFile<T extends IData<T>> {
      * @return vymazaný záznam
      */
     public T delete(int blockAddress, T recordWithKey) throws IOException {
-        Block<T> foundBlock = this.getBlockWithRecord(blockAddress, recordWithKey);
+        Block<T> foundBlock = this.readBlockWithRecord(blockAddress, recordWithKey);
 
         if (foundBlock == null || foundBlock.isFullyEmpty())
             return null;
@@ -361,22 +295,10 @@ public class HeapFile<T extends IData<T>> {
      * Metóda na zatvorenie súboru. Je potrebné ju zavolať pre korektné ukončenie práce so súborom.
      */
     public void close() {
-        String controlInfoFileName = this.fileName + ".txt";
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(controlInfoFileName))) {
-            writer.write("Cluster_size: " + this.clusterSize);
-            writer.newLine();
+        try (BufferedWriter writer = super.writeControlInfo()) {
             writer.write("Partially_empty: " + this.partiallyEmpty);
             writer.newLine();
-            writer.write("Fully_empty: " + this.fullyEmpty);
-            writer.newLine();
-            writer.write("Blocks_count: " + this.blocksCount);
-            writer.newLine();
-        } catch (IOException e) {
-            throw new RuntimeException("Error during writing control information into a text file!");
-        }
 
-        try {
             this.file.close();
         } catch (IOException e) {
             throw new RuntimeException("Error during heap file closing!");

@@ -1,7 +1,7 @@
 package Testing;
 
 import HeapFile.HeapFile;
-import HeapFile.IData;
+import FileDataStructure.IData;
 import HeapFile.RecordWithBlockAddress;
 
 import java.io.IOException;

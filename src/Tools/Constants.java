@@ -31,4 +31,15 @@ public class Constants {
                     Integer.BYTES +
                     (Constants.maxCustomerNameLength + Constants.maxCustomerSurnameLength + 1 + 1 + 1) * Byte.BYTES;
 
+    public static final int vehicleByCustomerIDSize =
+            // blockAddress (1 int), customerID (1 int)
+            2 * Integer.BYTES;
+
+    public static final int vehicleByLicensePlateSize =
+            // blockAddress (1 int)
+            Integer.BYTES +
+            // maxLicensePlate (10 characters), licensePlateLength (1 byte)
+            (Constants.maxLicensePlateCodeLength + 1) * Byte.BYTES;
+
+    public static final int integerBits = 8;
 }

@@ -1,6 +1,6 @@
 package Testing;
 
-import HeapFile.IData;
+import FileDataStructure.IData;
 import HeapFile.RecordWithBlockAddress;
 
 @FunctionalInterface

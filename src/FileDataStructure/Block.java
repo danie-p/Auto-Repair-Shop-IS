@@ -1,4 +1,4 @@
-package HeapFile;
+package FileDataStructure;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -11,6 +11,7 @@ public class Block<T extends IData<T>> implements IRecord {
 
     public Block(int clusterSize, T record) {
         // z velkosti clustra vyhrad 3x int pre atributy bloku, zvysne bajty clustra sa mozu pouzit na ukladanie zaznamov
+        // recordsCount = blokovaci faktor = pocet zaznamov, ktore sa zmestia do 1 bloku
         int recordsCount = (clusterSize - 3 * Integer.BYTES) / record.getSize();
         this.records = new ArrayList<>(recordsCount);
         for (int i = 0; i < recordsCount; i++) {

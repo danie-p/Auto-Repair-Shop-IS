@@ -1,5 +1,7 @@
 package HeapFile;
 
+import FileDataStructure.IData;
+
 public class RecordWithBlockAddress<T extends IData<T>> {
     private int blockAddress;
     private T record;

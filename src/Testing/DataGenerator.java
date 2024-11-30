@@ -1,7 +1,6 @@
 package Testing;
 
-import HeapFile.IData;
-import HeapFile.RecordWithBlockAddress;
+import FileDataStructure.IData;
 
 @FunctionalInterface
 public interface DataGenerator<T extends IData<T>> {

@@ -1,6 +1,6 @@
 package Model;
 
-import HeapFile.IData;
+import FileDataStructure.IData;
 import Tools.BitSetUtility;
 import Tools.Constants;
 import Tools.StringProcessor;
@@ -53,10 +53,10 @@ public class Customer implements IData<Customer> {
         return this.ID == other.ID;
     }
 
-    @Override
+/*    @Override
     public BitSet getHash() {
         return BitSetUtility.intToBitSet(this.ID);
-    }
+    }*/
 
     @Override
     public int getSize() {

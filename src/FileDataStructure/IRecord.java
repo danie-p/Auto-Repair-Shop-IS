@@ -1,4 +1,4 @@
-package HeapFile;
+package FileDataStructure;
 
 public interface IRecord {
     int getSize();
