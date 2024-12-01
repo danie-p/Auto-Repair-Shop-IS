@@ -74,4 +74,20 @@ public class VehicleByCustomerID implements IHashData<VehicleByCustomerID> {
                 ", customerID=" + customerID +
                 '}';
     }
+
+    public int getBlockAddress() {
+        return blockAddress;
+    }
+
+    public void setBlockAddress(int blockAddress) {
+        this.blockAddress = blockAddress;
+    }
+
+    public int getCustomerID() {
+        return customerID;
+    }
+
+    public void setCustomerID(int customerID) {
+        this.customerID = customerID;
+    }
 }

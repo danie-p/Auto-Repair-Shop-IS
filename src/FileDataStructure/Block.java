@@ -13,6 +13,10 @@ public class Block<T extends IData<T>> implements IRecord {
         // z velkosti clustra vyhrad 3x int pre atributy bloku, zvysne bajty clustra sa mozu pouzit na ukladanie zaznamov
         // recordsCount = blokovaci faktor = pocet zaznamov, ktore sa zmestia do 1 bloku
         int recordsCount = (clusterSize - 3 * Integer.BYTES) / record.getSize();
+
+        if (recordsCount == 0)
+            throw new IllegalStateException("Block is too small to contain any records!");
+
         this.records = new ArrayList<>(recordsCount);
         for (int i = 0; i < recordsCount; i++) {
             this.records.add(record.createClass());
@@ -54,39 +58,58 @@ public class Block<T extends IData<T>> implements IRecord {
     }
 
     /**
-     * @param recordToGet dočasný záznam s nastaveným unikátnym ID, podľa ktorého sa má vyhľadať záznam v bloku
+     * @param recordToGet dočasný záznam s nastaveným unikátnym kľúčom, podľa ktorého sa má v bloku vyhľadať záznam
      * @return nájdený záznam v bloku
      */
     public T getRecord(T recordToGet) {
-        int recordWithEqualIDIndex = this.findRecordWithEqualID(recordToGet);
+        int recordWithEqualKeyIndex = this.findRecordWithEqualKey(recordToGet);
 
         // ak sa nenasiel v zozname ziadny zaznam s ID zhodnym s vyhladavanym zaznamom
-        if (recordWithEqualIDIndex == -1) {
+        if (recordWithEqualKeyIndex == -1) {
             return null;
         }
 
-        return this.records.get(recordWithEqualIDIndex);
+        return this.records.get(recordWithEqualKeyIndex);
     }
 
     /**
-     * @param recordToDelete dočasný záznam s nastaveným unikátnym ID, podľa ktorého sa má vymazať záznam v bloku
-     * @return práve vymazaný záznam z bloku
+     * @param oldRecord dočasný záznam s nastaveným unikátnym kľúčom, podľa ktorého sa má v bloku vyhľadať záznam na editáciu
+     * @param newRecord záznam s úplne nastavenými hodnotami, ktoré sa majú editovať
+     * @return pôvodný záznam, ktorý bol editovaný
      */
-    public T deleteRecord(T recordToDelete) {
-        int recordWithEqualIDIndex = this.findRecordWithEqualID(recordToDelete);
+    public T updateRecord(T oldRecord, T newRecord) {
+        int recordWithEqualKeyIndex = this.findRecordWithEqualKey(oldRecord);
 
         // ak sa nenasiel v zozname ziadny zaznam s ID zhodnym s vyhladavanym zaznamom
-        if (recordWithEqualIDIndex == -1) {
+        if (recordWithEqualKeyIndex == -1) {
             return null;
         }
 
-        T deletedRecord = this.records.get(recordWithEqualIDIndex);
+        T foundOldRecord = this.records.get(recordWithEqualKeyIndex);
+        this.records.set(recordWithEqualKeyIndex, newRecord);
+
+        return foundOldRecord;
+    }
+
+    /**
+     * @param recordToDelete dočasný záznam s nastaveným unikátnym kľúčom, podľa ktorého sa má v bloku vyhľadať záznam na vymazanie
+     * @return práve vymazaný záznam z bloku
+     */
+    public T deleteRecord(T recordToDelete) {
+        int recordWithEqualKeyIndex = this.findRecordWithEqualKey(recordToDelete);
+
+        // ak sa nenasiel v zozname ziadny zaznam s ID zhodnym s vyhladavanym zaznamom
+        if (recordWithEqualKeyIndex == -1) {
+            return null;
+        }
+
+        T deletedRecord = this.records.get(recordWithEqualKeyIndex);
 
         // zneplatni mazany zaznam
         // vymen mazany zaznam s poslednym platnym zaznamom (t.j. na indexe validCount - 1) v zozname
         T temp = this.records.get(this.validCount - 1);
         this.records.set(this.validCount - 1, deletedRecord);
-        this.records.set(recordWithEqualIDIndex, temp);
+        this.records.set(recordWithEqualKeyIndex, temp);
         this.validCount--;
         return deletedRecord;
     }
@@ -95,7 +118,7 @@ public class Block<T extends IData<T>> implements IRecord {
      * @param recordWithSetID dočasný záznam s nastaveným ID, podľa ktorého sa má vyhľadať záznam v bloku
      * @return index záznamu so zhodným ID; ak sa taký nenašiel, vracia sa -1
      */
-    private int findRecordWithEqualID(T recordWithSetID) {
+    private int findRecordWithEqualKey(T recordWithSetID) {
         int recordWithEqualIDIndex = -1;
         for (int i = 0; i < this.records.size(); i++) {
             if (this.records.get(i).isEqualTo(recordWithSetID)) {

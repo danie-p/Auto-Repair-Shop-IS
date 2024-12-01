@@ -41,5 +41,5 @@ public class Constants {
             // maxLicensePlate (10 characters), licensePlateLength (1 byte)
             (Constants.maxLicensePlateCodeLength + 1) * Byte.BYTES;
 
-    public static final int integerBits = 8;
+    public static final int integerBits = 32;
 }

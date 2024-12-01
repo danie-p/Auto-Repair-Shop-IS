@@ -1,5 +1,6 @@
 package Model;
 
+import ExtendibleHashFile.IHashData;
 import FileDataStructure.IData;
 import Tools.BitSetUtility;
 import Tools.Constants;
@@ -10,7 +11,7 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Objects;
 
-public class Vehicle implements IData<Vehicle> {
+public class Vehicle implements IHashData<Vehicle> {
     private ServiceVisit[] serviceVisits = new ServiceVisit[5];
     private String customerName;
     private String customerSurname;
@@ -50,6 +51,20 @@ public class Vehicle implements IData<Vehicle> {
         }
     }
 
+    /**
+     * @param serviceVisit pridávaná návšteva setvisu
+     * @return návštevu servisu ne/bolo možné pridať (vracia false, ak je u daného vozidla už zapísaný maximálny počet návštev servisu)
+     */
+    public boolean addServiceVisit(ServiceVisit serviceVisit) {
+        if (this.serviceVisitsCount == Constants.maxCustomerServiceVisitsCount)
+            return false;
+
+        this.serviceVisits[this.serviceVisitsCount] = serviceVisit;
+        this.serviceVisitsCount++;
+
+        return true;
+    }
+
     @Override
     public Vehicle createClass() {
         return new Vehicle("", "", 0, "", null);
@@ -60,11 +75,6 @@ public class Vehicle implements IData<Vehicle> {
         // postacuje, aby sa rovnal jeden z unikatnych klucov
         return this.customerID == other.customerID || this.licensePlateCode.equals(other.licensePlateCode);
     }
-
-    /*@Override
-    public BitSet getHash() {
-        return BitSetUtility.intToBitSet(this.customerID);
-    }*/
 
     @Override
     public int getSize() {
@@ -145,19 +155,17 @@ public class Vehicle implements IData<Vehicle> {
 
     @Override
     public String toString() {
-        /*
         StringBuilder sb = new StringBuilder();
         for (ServiceVisit serviceVisit : serviceVisits) {
             sb.append("\n\t").append(serviceVisit);
         }
-         */
 
         return "Vehicle{" +
                 "customerName='" + customerName + '\'' +
                 ", customerSurname='" + customerSurname + '\'' +
                 ", customerID=" + customerID +
                 ", licensePlateCode='" + licensePlateCode + '\'' +
-                //"," + sb +
+                "," + sb +
                 '}';
     }
 
@@ -189,5 +197,10 @@ public class Vehicle implements IData<Vehicle> {
 
     public int getCustomerID() {
         return customerID;
+    }
+
+    @Override
+    public BitSet getHash() {
+        return BitSetUtility.intToBitSet(this.customerID);
     }
 }

@@ -84,4 +84,20 @@ public class VehicleByLicensePlate implements IHashData<VehicleByLicensePlate> {
                 ", licensePlateCode='" + licensePlateCode + '\'' +
                 '}';
     }
+
+    public int getBlockAddress() {
+        return blockAddress;
+    }
+
+    public void setBlockAddress(int blockAddress) {
+        this.blockAddress = blockAddress;
+    }
+
+    public String getLicensePlateCode() {
+        return licensePlateCode;
+    }
+
+    public void setLicensePlateCode(String licensePlateCode) {
+        this.licensePlateCode = licensePlateCode;
+    }
 }
