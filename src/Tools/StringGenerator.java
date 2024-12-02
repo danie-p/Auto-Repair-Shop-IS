@@ -21,7 +21,8 @@ public class StringGenerator {
     }
 
     public static String generateUniqueString(int maxLength) {
-        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        // umoznuje vygenerovat cca 78 mil. unikatnych 4-znakovych retazcov
+        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
 
         long currCounter = StringGenerator.uniqueStringCounter++;
         StringBuilder uniqueString = new StringBuilder();

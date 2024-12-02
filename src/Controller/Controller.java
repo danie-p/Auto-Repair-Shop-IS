@@ -24,6 +24,14 @@ public class Controller {
         this.model.clearData();
     }
 
+    public Vehicle getVehicleByIDAsObject(int customerID) throws IOException {
+        return this.model.getVehicleByID(customerID);
+    }
+
+    public Vehicle getVehicleByLPAsObject(String licensePlate) throws IOException {
+        return this.model.getVehicleByLP(licensePlate);
+    }
+
     public String getVehicleByID(int customerID) throws IOException {
         Vehicle foundVehicle = this.model.getVehicleByID(customerID);
 
@@ -45,6 +53,15 @@ public class Controller {
     public String insertVehicle(String customerName, String customerSurname, int customerID, String licensePlateCode) throws IOException {
         // vozidlo zaradene do evidencie zatial nema evidovane ziadne navstevy servisu
         Vehicle insertedVehicle = new Vehicle(customerName, customerSurname, customerID, licensePlateCode, null);
+
+        // vozidlo s danym ID uz v systeme existuje
+        if (this.model.getVehicleByID(customerID) != null)
+            return "Vehicle insertion was unsuccessful! A vehicle with Customer ID = [" + customerID + "] already exists!";
+
+        // vozidlo s danym ECV uz v systeme existuje
+        if (this.model.getVehicleByLP(licensePlateCode) != null)
+            return "Vehicle insertion was unsuccessful! A vehicle with License Plate Code = [" + licensePlateCode + "] already exists!";
+
         this.model.insertVehicle(insertedVehicle);
         this.customerIDCounter++;
 
@@ -117,7 +134,7 @@ public class Controller {
             String customerSurname = StringGenerator.generateRandomString(3, Constants.maxCustomerSurnameLength);
             int customerID = this.customerIDCounter;
             this.customerIDCounter++;
-            String licensePlateCode = StringGenerator.generateUniqueString(Constants.maxLicensePlateCodeLength);
+            String licensePlateCode = StringGenerator.generateUniqueString(5);
 
             int serviceVisitsCount = random.nextInt(Constants.maxCustomerServiceVisitsCount);
             ServiceVisit[] serviceVisits = new ServiceVisit[serviceVisitsCount];

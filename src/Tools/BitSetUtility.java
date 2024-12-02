@@ -7,11 +7,13 @@ public class BitSetUtility {
         int totalBits = Constants.integerBits;
         BitSet bitSet = new BitSet(totalBits);
 
+        // kazdy int ma 32 bitov
         for (int i = 0; i < totalBits; i++) {
             if ((intToConvert & (1 << i)) != 0) {
                 bitSet.set(i);
             }
         }
+
         return bitSet;
     }
 
@@ -26,5 +28,29 @@ public class BitSetUtility {
         }
 
         return intResult;
+    }
+
+    public static BitSet strToBitSet(String strToConvert) {
+        int totalBits = Constants.integerBits;
+        BitSet bitSet = new BitSet(totalBits);
+
+        // TODO: upravit pre variabilne dlzky strToConvert
+
+        // vezmi posledne 4 znaky zo stringu
+        strToConvert = strToConvert.substring(strToConvert.length() - 4);
+
+        int bitIndex = 0;
+        for (char c : strToConvert.toCharArray()) {
+            // kazdy znak ma 8 bitov
+            for (int i = 0; i < 8; i++) {
+                // ziskaj zo znaku jeho ASCII int reprezentaciu
+                if (((int) c & (1 << i)) != 0) {
+                    bitSet.set(bitIndex);
+                }
+                bitIndex++;
+            }
+        }
+
+        return bitSet;
     }
 }

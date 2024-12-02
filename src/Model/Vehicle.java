@@ -203,4 +203,20 @@ public class Vehicle implements IHashData<Vehicle> {
     public BitSet getHash() {
         return BitSetUtility.intToBitSet(this.customerID);
     }
+
+    public ServiceVisit[] getServiceVisits() {
+        return serviceVisits;
+    }
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public String getCustomerSurname() {
+        return customerSurname;
+    }
+
+    public byte getServiceVisitsCount() {
+        return serviceVisitsCount;
+    }
 }

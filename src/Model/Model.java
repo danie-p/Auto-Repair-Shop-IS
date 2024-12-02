@@ -30,20 +30,28 @@ public class Model {
         VehicleByCustomerID tempHashRecord = new VehicleByCustomerID(-1, idToSearchBy);
         VehicleByCustomerID foundHashRecord = this.extHashFileByID.get(tempHashRecord);
 
-        int heapBlockAddress = foundHashRecord.getBlockAddress();
-        Vehicle tempHeapRecord = new Vehicle("", "", foundHashRecord.getCustomerID(), "", null);
+        if (foundHashRecord != null) {
+            int heapBlockAddress = foundHashRecord.getBlockAddress();
+            Vehicle tempHeapRecord = new Vehicle("", "", foundHashRecord.getCustomerID(), "", null);
 
-        return this.heapFileVehicles.get(heapBlockAddress, tempHeapRecord);
+            return this.heapFileVehicles.get(heapBlockAddress, tempHeapRecord);
+        }
+
+        return null;
     }
 
     public Vehicle getVehicleByLP(String lpToSearchBy) throws IOException {
         VehicleByLicensePlate tempHashRecord = new VehicleByLicensePlate(-1, lpToSearchBy);
         VehicleByLicensePlate foundHashRecord = this.extHashFileByLP.get(tempHashRecord);
 
-        int heapBlockAddress = foundHashRecord.getBlockAddress();
-        Vehicle tempHeapRecord = new Vehicle("", "", -1, foundHashRecord.getLicensePlateCode(), null);
+        if (foundHashRecord != null) {
+            int heapBlockAddress = foundHashRecord.getBlockAddress();
+            Vehicle tempHeapRecord = new Vehicle("", "", -1, foundHashRecord.getLicensePlateCode(), null);
 
-        return this.heapFileVehicles.get(heapBlockAddress, tempHeapRecord);
+            return this.heapFileVehicles.get(heapBlockAddress, tempHeapRecord);
+        }
+
+        return null;
     }
 
     // 2. Pridanie vozidla – na základe zadaných údajov zaradí vozidlo do evidencie (pozor na ošetrenie
@@ -67,10 +75,14 @@ public class Model {
         VehicleByCustomerID tempHashRecord = new VehicleByCustomerID(-1, idToSearchBy);
         VehicleByCustomerID foundHashRecord = this.extHashFileByID.get(tempHashRecord);
 
-        int heapBlockAddress = foundHashRecord.getBlockAddress();
-        Vehicle tempHeapRecord = new Vehicle("", "", foundHashRecord.getCustomerID(), "", null);
+        if (foundHashRecord != null) {
+            int heapBlockAddress = foundHashRecord.getBlockAddress();
+            Vehicle tempHeapRecord = new Vehicle("", "", foundHashRecord.getCustomerID(), "", null);
 
-        return this.insertServiceVisitHelper(serviceVisit, heapBlockAddress, tempHeapRecord);
+            return this.insertServiceVisitHelper(serviceVisit, heapBlockAddress, tempHeapRecord);
+        }
+
+        return null;
     }
 
     /**
@@ -80,10 +92,14 @@ public class Model {
         VehicleByLicensePlate tempHashRecord = new VehicleByLicensePlate(-1, lpToSearchBy);
         VehicleByLicensePlate foundHashRecord = this.extHashFileByLP.get(tempHashRecord);
 
-        int heapBlockAddress = foundHashRecord.getBlockAddress();
-        Vehicle tempHeapRecord = new Vehicle("", "", -1, foundHashRecord.getLicensePlateCode(), null);
+        if (foundHashRecord != null) {
+            int heapBlockAddress = foundHashRecord.getBlockAddress();
+            Vehicle tempHeapRecord = new Vehicle("", "", -1, foundHashRecord.getLicensePlateCode(), null);
 
-        return this.insertServiceVisitHelper(serviceVisit, heapBlockAddress, tempHeapRecord);
+            return this.insertServiceVisitHelper(serviceVisit, heapBlockAddress, tempHeapRecord);
+        }
+
+        return null;
     }
 
     private Vehicle insertServiceVisitHelper(ServiceVisit serviceVisit, int heapBlockAddress, Vehicle tempHeapRecord) throws IOException {
@@ -93,6 +109,9 @@ public class Model {
             return null;
 
         Vehicle vehicleToUpdate = blockWithVehicleToUpdate.getRecord(tempHeapRecord);
+
+        if (vehicleToUpdate == null)
+            return null;
 
         if (!vehicleToUpdate.addServiceVisit(serviceVisit))
             // navstevu servisu nebolo mozne pridat, pretoze u daneho vozidla uz je zapisany max pocet navstev
@@ -117,18 +136,26 @@ public class Model {
         VehicleByCustomerID tempHashRecord = new VehicleByCustomerID(-1, oldVehicle.getCustomerID());
         VehicleByCustomerID foundHashRecord = this.extHashFileByID.get(tempHashRecord);
 
-        int heapBlockAddress = foundHashRecord.getBlockAddress();
+        if (foundHashRecord != null) {
+            int heapBlockAddress = foundHashRecord.getBlockAddress();
 
-        return this.heapFileVehicles.update(heapBlockAddress, oldVehicle, newVehicle);
+            return this.heapFileVehicles.update(heapBlockAddress, oldVehicle, newVehicle);
+        }
+
+        return null;
     }
 
     public Vehicle updateVehicleByLP(Vehicle oldVehicle, Vehicle newVehicle) throws IOException {
         VehicleByLicensePlate tempHashRecord = new VehicleByLicensePlate(-1, oldVehicle.getLicensePlateCode());
         VehicleByLicensePlate foundHashRecord = this.extHashFileByLP.get(tempHashRecord);
 
-        int heapBlockAddress = foundHashRecord.getBlockAddress();
+        if (foundHashRecord != null) {
+            int heapBlockAddress = foundHashRecord.getBlockAddress();
 
-        return this.heapFileVehicles.update(heapBlockAddress, oldVehicle, newVehicle);
+            return this.heapFileVehicles.update(heapBlockAddress, oldVehicle, newVehicle);
+        }
+
+        return null;
     }
 
     public String readHeapFileSequentially() throws IOException {

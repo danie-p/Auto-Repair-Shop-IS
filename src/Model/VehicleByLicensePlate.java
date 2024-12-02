@@ -1,6 +1,7 @@
 package Model;
 
 import ExtendibleHashFile.IHashData;
+import Tools.BitSetUtility;
 import Tools.Constants;
 import Tools.StringProcessor;
 
@@ -22,8 +23,7 @@ public class VehicleByLicensePlate implements IHashData<VehicleByLicensePlate> {
 
     @Override
     public BitSet getHash() {
-        // TODO: implement hash function for string license plate
-        return null;
+        return BitSetUtility.strToBitSet(this.licensePlateCode);
     }
 
     @Override
