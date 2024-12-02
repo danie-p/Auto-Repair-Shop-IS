@@ -12,7 +12,7 @@ import java.util.BitSet;
 import java.util.Objects;
 
 public class Vehicle implements IHashData<Vehicle> {
-    private ServiceVisit[] serviceVisits = new ServiceVisit[5];
+    private final ServiceVisit[] serviceVisits = new ServiceVisit[Constants.maxCustomerServiceVisitsCount];
     private String customerName;
     private String customerSurname;
     private String licensePlateCode;
@@ -38,7 +38,7 @@ public class Vehicle implements IHashData<Vehicle> {
             if (serviceVisits != null && i < serviceVisits.length) {
                 this.serviceVisits[i] = serviceVisits[i];
             } else {
-                this.serviceVisits[i] = new ServiceVisit(0, 0, "");
+                this.serviceVisits[i] = new ServiceVisit(0, 0, null);
             }
         }
 
@@ -160,7 +160,7 @@ public class Vehicle implements IHashData<Vehicle> {
             sb.append("\n\t").append(serviceVisit);
         }
 
-        return "Vehicle{" +
+        return "Vehicle {" +
                 "customerName='" + customerName + '\'' +
                 ", customerSurname='" + customerSurname + '\'' +
                 ", customerID=" + customerID +

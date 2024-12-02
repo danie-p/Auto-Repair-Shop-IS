@@ -14,11 +14,14 @@ public class Constants {
             (Constants.maxCustomerNameLength + Constants.maxCustomerSurnameLength + Constants.maxLicensePlateCodeLength) * Byte.BYTES +
             // nameLength (1 byte), surnameLength (1 byte), licensePlateLength (1 byte), serviceVisitsCount (1 byte)
             4 * Byte.BYTES;
+    public static final int maxServiceDescriptionsCount = 10;
     public static final int maxServiceVisitDescLength = 20;
     public static final int serviceVisitSize =
-            // maxDesc (20 characters)
-            (Constants.maxServiceVisitDescLength) * Byte.BYTES +
-            // descLength (1 byte)
+            // maxServiceDescs (10) * maxDescLength (20 characters)
+            (Constants.maxServiceDescriptionsCount * Constants.maxServiceVisitDescLength) * Byte.BYTES +
+            // descLengths = maxServiceDescs (10)
+            Constants.maxServiceDescriptionsCount * Byte.BYTES +
+            // serviceDescriptionsCount (1 byte)
             Byte.BYTES +
             // date (1 int)
             Integer.BYTES +
@@ -28,8 +31,8 @@ public class Constants {
     // maxVisits (5) * serviceVisitSize, id (1 int), maxName (15 bytes), maxSurname (20 bytes), nameLength (1 byte), surnameLength (1 byte), serviceVisitsCount (1 byte)
     public static final int customerSize =
             Constants.maxCustomerServiceVisitsCount * Constants.serviceVisitSize +
-                    Integer.BYTES +
-                    (Constants.maxCustomerNameLength + Constants.maxCustomerSurnameLength + 1 + 1 + 1) * Byte.BYTES;
+            Integer.BYTES +
+            (Constants.maxCustomerNameLength + Constants.maxCustomerSurnameLength + 1 + 1 + 1) * Byte.BYTES;
 
     public static final int vehicleByCustomerIDSize =
             // blockAddress (1 int), customerID (1 int)

@@ -4,20 +4,38 @@ import Tools.Constants;
 import Tools.StringProcessor;
 
 import java.io.*;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class ServiceVisit {
+    private final String[] serviceDescriptions = new String[Constants.maxServiceDescriptionsCount];
+    private final byte[] descLengths = new byte[Constants.maxServiceDescriptionsCount];
     private int date;
     private double price;
-    private String desc;
-    private byte descLength;
+    private byte serviceDescriptionsCount;
 
-    public ServiceVisit(int date, double price, String desc) {
+    public ServiceVisit(int date, double price, String[] serviceDescriptions) {
         this.date = date;
         this.price = price;
 
-        this.desc = StringProcessor.initStringAttribute(desc, Constants.maxServiceVisitDescLength);
-        this.descLength = (byte) this.desc.length();
+        for (int i = 0; i < Constants.maxServiceDescriptionsCount; i++) {
+            if (serviceDescriptions != null && i < serviceDescriptions.length) {
+                this.serviceDescriptions[i] = StringProcessor.initStringAttribute(serviceDescriptions[i], Constants.maxServiceVisitDescLength);
+            } else {
+                this.serviceDescriptions[i] = "";
+            }
+            this.descLengths[i] = (byte) this.serviceDescriptions[i].length();
+        }
+
+        if (serviceDescriptions == null) {
+            this.serviceDescriptionsCount = 0;
+        } else if (serviceDescriptions.length >= Constants.maxServiceDescriptionsCount) {
+            this.serviceDescriptionsCount = Constants.maxServiceDescriptionsCount;
+        } else {
+            this.serviceDescriptionsCount = (byte) serviceDescriptions.length;
+        }
     }
 
     public int getSize() {
@@ -30,13 +48,17 @@ public class ServiceVisit {
         DataOutputStream outStream = new DataOutputStream(byteArrayOutputStream);
 
         try {
-            outStream.writeByte(this.descLength);
+            outStream.write(this.descLengths);
+
+            for (int i = 0; i < this.serviceDescriptions.length; i++) {
+                byte[] serviceDescBytes = StringProcessor.stringAttributeToByteArray(this.serviceDescriptions[i], Constants.maxServiceVisitDescLength, this.descLengths[i]);
+                // zapis pole bajtov o fixnej dlzke (max dlzke popisu prace)
+                outStream.write(serviceDescBytes);
+            }
+
+            outStream.writeByte(this.serviceDescriptionsCount);
             outStream.writeInt(this.date);
             outStream.writeDouble(this.price);
-
-            byte[] descBytes = StringProcessor.stringAttributeToByteArray(this.desc, Constants.maxServiceVisitDescLength, this.descLength);
-            // zapis pole bajtov o fixnej dlzke (max dlzke popisu)
-            outStream.write(descBytes);
 
             return byteArrayOutputStream.toByteArray();
         } catch (IOException e) {
@@ -49,14 +71,19 @@ public class ServiceVisit {
         DataInputStream inStream = new DataInputStream(byteArrayInputStream);
 
         try {
-            this.descLength = inStream.readByte();
+            inStream.readFully(this.descLengths);
+
+            for (int i = 0; i < this.serviceDescriptions.length; i++) {
+                // precitaj pole bajtov o fixnej dlzke (max dlzke popisu prace)
+                byte[] serviceDescBytes = new byte[Constants.maxServiceVisitDescLength];
+                inStream.readFully(serviceDescBytes);
+                this.serviceDescriptions[i] = StringProcessor.byteArrayToStringAttribute(serviceDescBytes, this.descLengths[i]);
+            }
+
+            this.serviceDescriptionsCount = inStream.readByte();
             this.date = inStream.readInt();
             this.price = inStream.readDouble();
 
-            // precitaj pole bajtov o fixnej dlzke (max dlzke popisu)
-            byte[] descBytes = new byte[Constants.maxServiceVisitDescLength];
-            inStream.readFully(descBytes);
-            this.desc = StringProcessor.byteArrayToStringAttribute(descBytes, this.descLength);
         } catch (IOException e) {
             throw new IllegalStateException("Error during conversion from byte array!");
         }
@@ -64,26 +91,40 @@ public class ServiceVisit {
 
     @Override
     public String toString() {
-        return "ServiceVisit{" +
-                "date=" + date +
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < serviceDescriptionsCount; i++) {
+            String substr = serviceDescriptions[i].substring(0, descLengths[i]);
+            sb.append("'").append(substr);
+            if (i == serviceDescriptionsCount - 1) {
+                sb.append("'");
+            } else {
+                sb.append("', ");
+            }
+        }
+
+        return "\tServiceVisit {" +
+                "date=" + LocalDateTime.ofEpochSecond(date, 0, ZoneOffset.UTC) +
                 ", price=" + price +
-                ", desc='" + desc + '\'' +
-                ", descLength=" + descLength +
+                ", serviceDescriptions: " + sb +
                 '}';
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof ServiceVisit serviceVisit)) return false;
-        return date == serviceVisit.date &&
-                Double.compare(price, serviceVisit.price) == 0 &&
-                descLength == serviceVisit.descLength &&
-                desc.equals(serviceVisit.desc);
+        if (!(o instanceof ServiceVisit that)) return false;
+        return date == that.date &&
+                Double.compare(price, that.price) == 0 &&
+                serviceDescriptionsCount == that.serviceDescriptionsCount &&
+                Arrays.equals(serviceDescriptions, that.serviceDescriptions) &&
+                Arrays.equals(descLengths, that.descLengths);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(date, price, desc, descLength);
+        int result = Objects.hash(date, price, serviceDescriptionsCount);
+        result = 31 * result + Arrays.hashCode(serviceDescriptions);
+        result = 31 * result + Arrays.hashCode(descLengths);
+        return result;
     }
 }

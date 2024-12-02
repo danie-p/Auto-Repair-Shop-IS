@@ -3,7 +3,6 @@ package Testing;
 import ExtendibleHashFile.ExtendibleHashFile;
 import HeapFile.HeapFile;
 import HeapFile.RecordWithBlockAddress;
-import Model.Customer;
 import Model.ServiceVisit;
 import Model.Vehicle;
 import Tools.Constants;
@@ -113,47 +112,77 @@ public class Tester {
         }
     }
 
-    public void runSmallHeapFileTestOnCustomers(int clusterSize) throws IOException {
-        ServiceVisit[] visits = new ServiceVisit[] {
-                new ServiceVisit(100, 100.0, "servis abcdefghijklmnop"),
-                new ServiceVisit(200, 200.0, "servis 2"),
-                new ServiceVisit(300, 300.0, "servis 3"),
-                new ServiceVisit(400, 400.0, "servis 4"),
-                new ServiceVisit(500, 500.0, "servis 5"),
-                new ServiceVisit(600, 600.0, "servis 6"),
+    public void runSmallHeapFileTestOnVehicles(int clusterSize) throws IOException {
+        String[][] descs = new String[][] {
+                new String[6],
+                new String[7],
+                new String[8],
+                new String[9],
+                new String[10],
+                new String[3]
         };
-        Customer customer = new Customer(1234, "Jozef", "Skusobny", visits);
+
+        for (int i = 0; i < descs.length; i++) {
+            for (int j = 0; j < descs[i].length; j++) {
+                descs[i][j] = "popis prac " + j + " pre " + (i + 1);
+            }
+        }
+
+        String[] descs7 = new String[4];
+        for (int i = 0; i < descs7.length; i++) {
+            descs7[i] = "POPIS PRAC " + i + " pre 7";
+        }
+
+        String[] descs8 = new String[4];
+        for (int i = 0; i < descs8.length; i++) {
+            descs8[i] = "POPIS PRAC " + i + " pre 8";
+        }
+
+        String[] descs9 = new String[4];
+        for (int i = 0; i < descs9.length; i++) {
+            descs9[i] = "POPIS PRAC " + i + " pre 9";
+        }
+
+        ServiceVisit[] visits = new ServiceVisit[] {
+                new ServiceVisit(100, 100.0, descs[0]),
+                new ServiceVisit(200, 200.0, descs[1]),
+                new ServiceVisit(300, 300.0, descs[2]),
+                new ServiceVisit(400, 400.0, descs[3]),
+                new ServiceVisit(500, 500.0, descs[4]),
+                new ServiceVisit(600, 600.0, descs[5]),
+        };
+        Vehicle vehicle = new Vehicle("Jozef", "Skusobny", 1234, "MT12", visits);
 
         ServiceVisit[] visits2 = new ServiceVisit[] {
-                new ServiceVisit(900, 900.0, "toto je servis 123456"),
-                new ServiceVisit(800, 800.0, "toto je servis 2"),
-                new ServiceVisit(700, 700.0, "toto je servis 3")
+                new ServiceVisit(900, 900.0, descs7),
+                new ServiceVisit(800, 800.0, descs8),
+                new ServiceVisit(700, 700.0, descs9)
         };
-        Customer customer2 = new Customer(6789, "Mia", "Testova", visits2);
-        Customer customer3 = new Customer(5678, "Amelia", "Nejaka", visits);
-        Customer customer4 = new Customer(3456, "Jan", "Nejaky", visits2);
+        Vehicle vehicle2 = new Vehicle("Mia", "Testova", 6789, "ZA67", visits2);
+        Vehicle vehicle3 = new Vehicle("Amelia", "Nejaka", 5678, "MT56", visits);
+        Vehicle vehicle4 = new Vehicle("Jan", "Nejaky", 3456, "ZA34", visits2);
 
-        HeapFile<Customer> heapFile = new HeapFile<Customer>("hf1", clusterSize, customer);
+        HeapFile<Vehicle> heapFile = new HeapFile<Vehicle>("hf1", clusterSize, vehicle);
 
-        heapFile.insert(customer);
-        heapFile.insert(customer2);
-        heapFile.insert(customer3);
-        heapFile.insert(customer4);
-        heapFile.delete(0, customer2);
-        heapFile.delete(0, customer);
-        heapFile.insert(customer);
-        heapFile.insert(customer2);
-        heapFile.insert(customer);
-        heapFile.insert(customer2);
-        heapFile.delete(0, customer);
-        heapFile.delete(1, customer3);
-        heapFile.insert(customer2);
-        heapFile.delete(2, customer);
-        heapFile.delete(1, customer4);
-        heapFile.delete(1, customer2);
-        heapFile.delete(0, customer2);
-        heapFile.insert(customer);
-        heapFile.insert(customer3);
+        heapFile.insert(vehicle);
+        heapFile.insert(vehicle2);
+        heapFile.insert(vehicle3);
+        heapFile.insert(vehicle4);
+        heapFile.delete(0, vehicle2);
+        heapFile.delete(0, vehicle);
+        heapFile.insert(vehicle);
+        heapFile.insert(vehicle2);
+        heapFile.insert(vehicle);
+        heapFile.insert(vehicle2);
+        heapFile.delete(0, vehicle);
+        heapFile.delete(1, vehicle3);
+        heapFile.insert(vehicle2);
+        heapFile.delete(2, vehicle);
+        heapFile.delete(1, vehicle4);
+        heapFile.delete(1, vehicle2);
+        heapFile.delete(0, vehicle2);
+        heapFile.insert(vehicle);
+        heapFile.insert(vehicle3);
 
         System.out.println(heapFile.readSequentially());
 

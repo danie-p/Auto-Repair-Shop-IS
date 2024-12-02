@@ -101,7 +101,7 @@ public abstract class FileDataStructure<T extends IData<T>> {
         int i = 0;
         while (i < this.file.length() / this.clusterSize) {
             Block<T> readBlock = this.readBlockFromFile(i);
-            sb.append("Block ").append(i).append(":\n").append(readBlock);
+            sb.append("=== Block ").append(i).append(" ===\n").append(readBlock).append("\n\n");
             i++;
         }
 

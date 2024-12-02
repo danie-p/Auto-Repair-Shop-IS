@@ -212,7 +212,7 @@ public class Block<T extends IData<T>> implements IRecord {
             sb.append("\n\t").append(record);
         }
 
-        return "Block{" +
+        return "Block {" +
                 "records=" + sb +
                 ",\nrecordsCount=" + this.records.size() +
                 ", validCount=" + validCount +
