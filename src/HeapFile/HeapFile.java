@@ -3,8 +3,6 @@ package HeapFile;
 import FileDataStructure.*;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashSet;
 
 public class HeapFile<T extends IData<T>> extends FileDataStructure<T> {
     // adresa prveho ciastocne volneho bloku (zaciatok zretazenia ciastocne volnych blokov)

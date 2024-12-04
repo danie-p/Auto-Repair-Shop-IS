@@ -130,4 +130,28 @@ public class OperationsGeneratorForHeapFile<T extends IData<T>> extends Operatio
 
         return true;
     }
+
+    // TODO: pridat do testov
+    private void updateTest(double existingP) throws IOException {
+        double randExistingElement = random.nextDouble();
+        RecordWithBlockAddress<T> oldData;
+        RecordWithBlockAddress<T> newData = this.dataWithAddressGenerator.generateDataWithAddress();
+
+        if (randExistingElement < existingP && !externalDataList.isEmpty()) {
+            // vyhladaj existujuci (uz vlozeny) prvok
+            int randIndex = random.nextInt(externalDataList.size());
+            oldData = externalDataList.set(randIndex, newData);
+            this.heapFile.update(oldData.getBlockAddress(), oldData.getRecord(), newData.getRecord());
+        } else {
+            // vyhladaj nahodny prvok
+            oldData = this.dataWithAddressGenerator.generateDataWithAddress();
+            if (externalDataList.contains(oldData)) {
+                externalDataList.set(externalDataList.indexOf(oldData), newData);
+            }
+            this.heapFile.update(oldData.getBlockAddress(), oldData.getRecord(), newData.getRecord());
+        }
+
+        operationsCounter++;
+        System.out.println("Operation " + operationsCounter + ": update; old data: " + oldData.toString() + ", new data: " + newData.toString());
+    }
 }

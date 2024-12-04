@@ -40,6 +40,22 @@ public class BitSetUtility {
         strToConvert = strToConvert.substring(strToConvert.length() - 4);
 
         int bitIndex = 0;
+        char[] strAsCharArr = strToConvert.toCharArray();
+
+        // prechadzaj v opacnom poradi (vacsia variabilita pre generovane kluce)
+        for (int i = strAsCharArr.length - 1; i >= 0; i--) {
+            // kazdy znak ma 8 bitov
+            for (int j = 0; j < 8; j++) {
+                // ziskaj zo znaku jeho ASCII int reprezentaciu
+                if (((int) strAsCharArr[i] & (1 << j)) != 0) {
+                    bitSet.set(bitIndex);
+                }
+                bitIndex++;
+            }
+        }
+
+        /*
+        int bitIndex = 0;
         for (char c : strToConvert.toCharArray()) {
             // kazdy znak ma 8 bitov
             for (int i = 0; i < 8; i++) {
@@ -50,6 +66,7 @@ public class BitSetUtility {
                 bitIndex++;
             }
         }
+         */
 
         return bitSet;
     }

@@ -72,7 +72,7 @@ public class Vehicle implements IHashData<Vehicle> {
 
     @Override
     public boolean isEqualTo(Vehicle other) {
-        // postacuje, aby sa rovnal jeden z unikatnych klucov
+        // postacuje, aby sa rovnal jeden z unikatnych klucov; aj jediny kluc zabezpecuje unikatnost vozidla
         return this.customerID == other.customerID || this.licensePlateCode.equals(other.licensePlateCode);
     }
 
@@ -201,6 +201,7 @@ public class Vehicle implements IHashData<Vehicle> {
 
     @Override
     public BitSet getHash() {
+//        return BitSetUtility.strToBitSet(this.licensePlateCode);
         return BitSetUtility.intToBitSet(this.customerID);
     }
 

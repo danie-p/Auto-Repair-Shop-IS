@@ -3,11 +3,9 @@ package GUI;
 import Controller.Controller;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.ArrayList;
 
 public class MainOperations {
     private JPanel contentPane;
@@ -17,10 +15,6 @@ public class MainOperations {
     private JPanel panelAddVehicle;
     private JPanel panelAddServiceVisit;
     private JPanel panelOtherFunctionalities;
-    private JLabel labelFindVehicle;
-    private JLabel labelAddVehicle;
-    private JLabel labelAddServiceVisit;
-    private JLabel labelOther;
     private JTextField textFieldFindByID;
     private JButton buttonFindByID;
     private JTextField textFieldFindByLP;
@@ -36,24 +30,6 @@ public class MainOperations {
     private JLabel labelAddID;
     private JLabel labelAddLP;
     private JButton buttonAddVehicle;
-    private JLabel labelAddDate;
-    private JTextField textFieldAddDay;
-    private JTextField textFieldAddYear;
-    private JTextField textFieldAddMonth;
-    private JLabel labelAddTime;
-    private JTextField textFieldAddHour;
-    private JTextField textFieldAddMinute;
-    private JTextField textFieldAddSecond;
-    private JLabel labelAddPrice;
-    private JTextField textFieldAddPrice;
-    private JScrollPane scrollPaneServiceDesc;
-    private JButton buttonAddServiceVisitDesc;
-    private JButton buttonAddServiceVisitByID;
-    private JTextField textFieldAddSVByID;
-    private JLabel labelAddSVByID;
-    private JLabel labelAddSVByLP;
-    private JTextField textFieldAddSVByLP;
-    private JButton buttonAddServiceVisitByLP;
     private JLabel labelGenerateData;
     private JTextField textFieldGenerateNum;
     private JLabel labelGenerateNum;
@@ -62,17 +38,20 @@ public class MainOperations {
     private JButton buttonShowHeapFile;
     private JButton buttonShowHashFileByID;
     private JButton buttonShowHashFileByLP;
-    private JPanel panelServiceDescs;
     private JButton buttonclearSystem;
+    private JPanel panelDeleteVehicle;
+    private JLabel labelDeleteByID;
+    private JTextField textFieldDeleteByID;
+    private JTextField textFieldDeleteByLP;
+    private JLabel labelDeleteByLP;
+    private JButton buttonDeleteByID;
+    private JButton buttonDeleteByLP;
     private Controller controller;
-    private int serviceDescs;
-    private ArrayList<JTextField> serviceDescsTextFields;
 
     public MainOperations(Controller controller) {
         this.controller = controller;
-        this.serviceDescs = 0;
-        this.panelServiceDescs.setLayout(new BoxLayout(panelServiceDescs, BoxLayout.Y_AXIS));
-        this.serviceDescsTextFields = new ArrayList<>();
+
+        this.initTextBorders();
 
         this.buttonAddVehicle.addActionListener(e -> {
             try {
@@ -123,79 +102,10 @@ public class MainOperations {
             }
         });
 
-        this.buttonAddServiceVisitDesc.addActionListener(e -> {
-            if (this.serviceDescs < 10) {
-                this.serviceDescs++;
-                JPanel newRow = new JPanel();
-                newRow.setLayout(new FlowLayout(FlowLayout.LEFT));
-
-                JLabel label = new JLabel("Description " + this.serviceDescs);
-                JTextField textField = new JTextField(10);
-
-                newRow.add(label);
-                newRow.add(textField);
-
-                this.panelServiceDescs.add(newRow);
-                this.panelServiceDescs.revalidate();
-                this.panelServiceDescs.repaint();
-                this.contentPane.revalidate();
-                this.contentPane.repaint();
-
-                this.serviceDescsTextFields.add(textField);
-            }
-        });
-
-        this.buttonAddServiceVisitByID.addActionListener(e -> {
-            try {
-                int customerID = Integer.parseInt(textFieldAddSVByID.getText());
-                int date = this.addServiceVisitHelper();
-                double price = Double.parseDouble(textFieldAddPrice.getText());
-
-                String[] serviceDescsArr = new String[this.serviceDescsTextFields.size()];
-                for (int i = 0; i < serviceDescsArr.length; i++) {
-                    serviceDescsArr[i] = this.serviceDescsTextFields.get(i).getText();
-                }
-
-                String s = this.controller.addServiceVisitByID(customerID, date, price, serviceDescsArr);
-                textPane.setText(s);
-
-                textFieldAddSVByID.setText("");
-
-                this.addServiceVisitCleanup();
-            } catch (NumberFormatException ex) {
-                textPane.setText("Please enter valid inputs!");
-            } catch (IOException ex) {
-                textPane.setText("Input/Output operation was unsuccessful!" + ex);
-            }
-        });
-
-        this.buttonAddServiceVisitByLP.addActionListener(e -> {
-            try {
-                String licensePlate = textFieldAddSVByLP.getText();
-                int date = this.addServiceVisitHelper();
-                double price = Double.parseDouble(textFieldAddPrice.getText());
-
-                String[] serviceDescsArr = new String[this.serviceDescsTextFields.size()];
-                for (int i = 0; i < serviceDescsArr.length; i++) {
-                    serviceDescsArr[i] = this.serviceDescsTextFields.get(i).getText();
-                }
-
-                String s = this.controller.addServiceVisitByLP(licensePlate, date, price, serviceDescsArr);
-                textPane.setText(s);
-
-                textFieldAddSVByID.setText("");
-
-                this.addServiceVisitCleanup();
-            } catch (NumberFormatException ex) {
-                textPane.setText("Please enter valid inputs!");
-            } catch (IOException ex) {
-                textPane.setText("Input/Output operation was unsuccessful!" + ex);
-            }
-        });
-
         this.buttonGenerateData.addActionListener(e -> {
             try {
                 int numOfVehicles = Integer.parseInt(textFieldGenerateNum.getText());
+                textPane.setText("Generating " + numOfVehicles + " random vehicles. This may take a while.");
                 this.controller.generateInputData(numOfVehicles);
                 textPane.setText("Random input data has been generated.");
 
@@ -244,34 +154,22 @@ public class MainOperations {
         });
     }
 
-    private void addServiceVisitCleanup() {
-        textFieldAddYear.setText("");
-        textFieldAddMonth.setText("");
-        textFieldAddDay.setText("");
-        textFieldAddHour.setText("");
-        textFieldAddMinute.setText("");
-        textFieldAddSecond.setText("");
-        textFieldAddPrice.setText("");
+    private void initTextBorders() {
+        TitledBorder titledBorderFind = BorderFactory.createTitledBorder("Find vehicle");
+        titledBorderFind.setTitleFont(titledBorderFind.getTitleFont().deriveFont(Font.BOLD));
+        this.panelFindVehicle.setBorder(titledBorderFind);
 
-        this.panelServiceDescs.removeAll();
-        this.panelServiceDescs.revalidate();
-        this.panelServiceDescs.repaint();
-        this.contentPane.revalidate();
-        this.contentPane.repaint();
+        TitledBorder titledBorderAdd = BorderFactory.createTitledBorder("Add vehicle");
+        titledBorderAdd.setTitleFont(titledBorderAdd.getTitleFont().deriveFont(Font.BOLD));
+        this.panelAddVehicle.setBorder(titledBorderAdd);
 
-        this.serviceDescsTextFields = new ArrayList<>();
-        this.serviceDescs = 0;
-    }
+        TitledBorder titledBorderDelete = BorderFactory.createTitledBorder("Delete vehicle");
+        titledBorderDelete.setTitleFont(titledBorderDelete.getTitleFont().deriveFont(Font.BOLD));
+        this.panelDeleteVehicle.setBorder(titledBorderDelete);
 
-    private int addServiceVisitHelper() {
-        int year = Integer.parseInt(textFieldAddYear.getText());
-        int month = Integer.parseInt(textFieldAddMonth.getText());
-        int day = Integer.parseInt(textFieldAddDay.getText());
-        int hour = Integer.parseInt(textFieldAddHour.getText());
-        int minute = Integer.parseInt(textFieldAddMinute.getText());
-        int second = Integer.parseInt(textFieldAddSecond.getText());
-        LocalDateTime dateTime = LocalDateTime.of(year, month, day, hour, minute, second);
-        return (int) dateTime.toEpochSecond(ZoneOffset.UTC);
+        TitledBorder titledBorderOther = BorderFactory.createTitledBorder("Other functionalities");
+        titledBorderOther.setTitleFont(titledBorderOther.getTitleFont().deriveFont(Font.BOLD));
+        this.panelOtherFunctionalities.setBorder(titledBorderOther);
     }
 
     public JPanel getPanel() {

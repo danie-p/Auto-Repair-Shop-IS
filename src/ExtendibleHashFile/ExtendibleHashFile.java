@@ -6,7 +6,6 @@ import Tools.BitSetUtility;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.HashSet;
 
 public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructure<T> {
     private int fileDepth; // D
@@ -119,10 +118,10 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
             }
 
             if (blockToInsertInto.isFull()) {
-                for (DirectoryItem item : this.directory) {
-                    if (item.getAddress() == blockAddress) {
-                        item.incrementLocalDepth();
-                    }
+                int numOfSameDirectoryItems = 1 << (this.fileDepth - localDepth);
+
+                for (int i = 0; i < numOfSameDirectoryItems; i++) {
+                    this.directory.get(directoryIndex + i).incrementLocalDepth();
                 }
 
                 if (localDepth == this.fileDepth) {
@@ -187,17 +186,21 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
             }
         }
 
-        if (this.blocksCount != 0) {
-            if (oldBlock.isFullyEmpty()) {
-                // ak sa vsetky zaznamy presunuli zo stareho bloku do noveho ... stary blok ostal prazdny ... menezuj ho ako prazdny blok
-                this.manageFullyEmptyBlock(oldBlockAddress, oldBlock);
-            } else {
-                // ak je stary blok neprazdny, aktualizuj ho
-                this.writeBlockIntoFile(oldBlockAddress, oldBlock);
+        int numOfSameDirectoryItems = 1 << (this.fileDepth - oldBlockLocalDepth);
+
+        if (oldBlock.isFullyEmpty()) {
+            // ak sa vsetky zaznamy presunuli zo stareho bloku do noveho ... stary blok ostal prazdny ... menezuj ho ako prazdny blok
+            this.manageFullyEmptyBlock(oldBlockAddress, oldBlock);
+
+            // zneplatni odkazy na prazdny blok v adresari
+            for (int i = 0; i < numOfSameDirectoryItems; i++) {
+                this.directory.get(directoryIndex + i).setAddress(-1);
             }
+        } else {
+            // ak je stary blok neprazdny, aktualizuj ho
+            this.writeBlockIntoFile(oldBlockAddress, oldBlock);
         }
 
-        int numOfSameDirectoryItems = 1 << (this.fileDepth - oldBlockLocalDepth);
         int newDirectoryIndex = directoryIndex + numOfSameDirectoryItems;
 
         if (!newBlock.isFullyEmpty()) {

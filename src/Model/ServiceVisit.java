@@ -127,4 +127,24 @@ public class ServiceVisit {
         result = 31 * result + Arrays.hashCode(descLengths);
         return result;
     }
+
+    public String[] getServiceDescriptions() {
+        return serviceDescriptions;
+    }
+
+    public byte[] getDescLengths() {
+        return descLengths;
+    }
+
+    public int getDate() {
+        return date;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public byte getServiceDescriptionsCount() {
+        return serviceDescriptionsCount;
+    }
 }
