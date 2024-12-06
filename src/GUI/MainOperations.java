@@ -46,10 +46,19 @@ public class MainOperations {
     private JLabel labelDeleteByLP;
     private JButton buttonDeleteByID;
     private JButton buttonDeleteByLP;
+    private JPanel panelImportExport;
+    private JTextField textField1;
+    private JTextField textField2;
+    private JTextField textField3;
+    private JTextField textField4;
+    private JTextField textField5;
+    private JTextField textField6;
     private Controller controller;
 
     public MainOperations(Controller controller) {
         this.controller = controller;
+
+        this.scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
         this.initTextBorders();
 
@@ -166,6 +175,10 @@ public class MainOperations {
         TitledBorder titledBorderDelete = BorderFactory.createTitledBorder("Delete vehicle");
         titledBorderDelete.setTitleFont(titledBorderDelete.getTitleFont().deriveFont(Font.BOLD));
         this.panelDeleteVehicle.setBorder(titledBorderDelete);
+
+        TitledBorder titledBorderIE = BorderFactory.createTitledBorder("Import/Export");
+        titledBorderIE.setTitleFont(titledBorderIE.getTitleFont().deriveFont(Font.BOLD));
+        this.panelImportExport.setBorder(titledBorderIE);
 
         TitledBorder titledBorderOther = BorderFactory.createTitledBorder("Other functionalities");
         titledBorderOther.setTitleFont(titledBorderOther.getTitleFont().deriveFont(Font.BOLD));

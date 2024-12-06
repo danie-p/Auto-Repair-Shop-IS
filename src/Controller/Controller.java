@@ -130,22 +130,22 @@ public class Controller {
         Random random = new Random();
 
         for (int i = 0; i < numberOfVehicles; i++) {
-            String customerName = StringGenerator.generateRandomString(3, Constants.maxCustomerNameLength);
-            String customerSurname = StringGenerator.generateRandomString(3, Constants.maxCustomerSurnameLength);
+            String customerName = StringGenerator.generateRandomString(3, Constants.maxCustomerNameLength + 1);
+            String customerSurname = StringGenerator.generateRandomString(3, Constants.maxCustomerSurnameLength + 1);
             int customerID = this.customerIDCounter;
             this.customerIDCounter++;
-            String licensePlateCode = StringGenerator.generateUniqueString(5);
+            String licensePlateCode = StringGenerator.generateUniqueString(4);
 
-            int serviceVisitsCount = random.nextInt(Constants.maxCustomerServiceVisitsCount);
+            int serviceVisitsCount = random.nextInt(Constants.maxCustomerServiceVisitsCount + 1);
             ServiceVisit[] serviceVisits = new ServiceVisit[serviceVisitsCount];
             for (int j = 0; j < serviceVisitsCount; j++) {
                 int date = random.nextInt();
                 double price = Math.round(random.nextDouble(500) * 100.0) / 100.0;
 
-                int serviceDescsCount = random.nextInt(Constants.maxServiceDescriptionsCount);
+                int serviceDescsCount = random.nextInt(Constants.maxServiceDescriptionsCount + 1);
                 String[] serviceDescs = new String[serviceDescsCount];
                 for (int k = 0; k < serviceDescsCount; k++) {
-                    String desc = StringGenerator.generateRandomString(3, Constants.maxServiceVisitDescLength);
+                    String desc = StringGenerator.generateRandomString(3, Constants.maxServiceVisitDescLength + 1);
                     serviceDescs[k] = desc;
                 }
 

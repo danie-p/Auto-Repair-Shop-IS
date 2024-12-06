@@ -3,9 +3,9 @@ package GUI;
 import Controller.Controller;
 import Model.ServiceVisit;
 import Model.Vehicle;
-import Tools.Constants;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.io.IOException;
@@ -77,8 +77,8 @@ public class UpdateVehicle {
     private Controller controller;
     private Vehicle oldVehicle;
     private ArrayList<PanelUpdateServiceVisits> panelsUpdateServiceVisits;
-    private int serviceDescsCount;
     private ArrayList<JTextField> serviceDescsTextFields;
+    private ArrayList<JLabel> serviceDescsLabels;
 
     public UpdateVehicle(Controller controller) {
         this.controller = controller;
@@ -86,17 +86,22 @@ public class UpdateVehicle {
 
         this.panelServiceDescs.setLayout(new BoxLayout(this.panelServiceDescs, BoxLayout.Y_AXIS));
         this.panelServiceDescs.setAlignmentY(Component.TOP_ALIGNMENT);
-        this.serviceDescsCount = 0;
         this.serviceDescsTextFields = new ArrayList<>();
+        this.serviceDescsLabels = new ArrayList<JLabel>();
 
-        panelInScrollPaneUpdateSV.setLayout(new BoxLayout(panelInScrollPaneUpdateSV, BoxLayout.Y_AXIS));
-        scrollPaneUpdateSV.setViewportView(panelInScrollPaneUpdateSV);
+        this.panelInScrollPaneUpdateSV.setLayout(new BoxLayout(this.panelInScrollPaneUpdateSV, BoxLayout.Y_AXIS));
+        this.scrollPaneUpdateSV.setViewportView(this.panelInScrollPaneUpdateSV);
+
+        this.scrollPaneServiceDesc.getVerticalScrollBar().setUnitIncrement(16);
+        this.scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        this.scrollPaneUpdateSV.getVerticalScrollBar().setUnitIncrement(16);
+        this.scrollPaneDeleteSV.getVerticalScrollBar().setUnitIncrement(16);
 
         this.initTextBorders();
 
         this.buttonFindByIDToUpdate.addActionListener(e -> {
             try {
-                int customerID = Integer.parseInt(textFieldFindByIDToUpdate.getText());
+                int customerID = Integer.parseInt(this.textFieldFindByIDToUpdate.getText());
 
                 Vehicle foundVehicle = this.controller.getVehicleByIDAsObject(customerID);
                 this.oldVehicle = foundVehicle;
@@ -111,6 +116,7 @@ public class UpdateVehicle {
 
                     textPane.setText("Vehicle with Customer ID = [" + customerID + "] was successfully found and can be edited.");
                 } else {
+                    this.updateVehicleCleanup();
                     textPane.setText("Vehicle update was unsuccessful! A vehicle with Customer ID = [" + customerID + "] could not be found!");
                 }
 
@@ -139,6 +145,7 @@ public class UpdateVehicle {
 
                     textPane.setText("Vehicle with License Plate Code = [" + licensePlate + "] was successfully found and can be edited.");
                 } else {
+                    this.updateVehicleCleanup();
                     textPane.setText("Vehicle update was unsuccessful! A vehicle with License Plate Code = [" + licensePlate + "] could not be found!");
                 }
 
@@ -172,12 +179,12 @@ public class UpdateVehicle {
 
                     double price = Double.parseDouble(panelsUpdateServiceVisit.getTextFieldUpdatePrice().getText());
 
-                    String[] serviceDescriptions = new String[this.oldVehicle.getServiceVisits()[i].getServiceDescriptionsCount()];
-                    for (int j = 0; j < serviceDescriptions.length; j++) {
-                        serviceDescriptions[j] = this.oldVehicle.getServiceVisits()[i].getServiceDescriptions()[j];
+                    ArrayList<JTextField> serviceDescsTextFields = panelsUpdateServiceVisit.getServiceDescsTextFields();
+                    String[] serviceDescriptions = new String[serviceDescsTextFields.size()];
+                    for (int j = 0; j < serviceDescsTextFields.size(); j++) {
+                        serviceDescriptions[j] = serviceDescsTextFields.get(j).getText();
                     }
 
-                    // TODO: service descriptions
                     ServiceVisit serviceVisit = new ServiceVisit(date, price, serviceDescriptions);
                     serviceVisits[i] = serviceVisit;
                 }
@@ -185,10 +192,31 @@ public class UpdateVehicle {
                 String s = this.controller.updateVehicleByID(this.oldVehicle, name, surname, customerID, licensePlate, serviceVisits);
                 textPane.setText(s);
 
-                textFieldUpdateName.setText("");
-                textFieldUpdateSurname.setText("");
-                textFieldUpdateCustomerID.setText("");
-                textFieldUpdateLicensePlate.setText("");
+                this.updateVehicleCleanup();
+            } catch (NumberFormatException ex) {
+                textPane.setText("Please enter valid inputs!");
+            } catch (IOException ex) {
+                textPane.setText("Input/Output operation was unsuccessful!" + ex);
+            }
+        });
+
+        this.buttonAddServiceVisitByID.addActionListener(e -> {
+            try {
+                int customerID = Integer.parseInt(textFieldAddSVByID.getText());
+                int date = this.addServiceVisitHelper();
+                double price = Double.parseDouble(textFieldAddPrice.getText());
+
+                String[] serviceDescsArr = new String[this.serviceDescsTextFields.size()];
+                for (int i = 0; i < serviceDescsArr.length; i++) {
+                    serviceDescsArr[i] = this.serviceDescsTextFields.get(i).getText();
+                }
+
+                String s = this.controller.addServiceVisitByID(customerID, date, price, serviceDescsArr);
+                textPane.setText(s);
+
+                textFieldAddSVByID.setText("");
+
+                this.addServiceVisitCleanup();
             } catch (NumberFormatException ex) {
                 textPane.setText("Please enter valid inputs!");
             } catch (IOException ex) {
@@ -210,7 +238,7 @@ public class UpdateVehicle {
                 String s = this.controller.addServiceVisitByLP(licensePlate, date, price, serviceDescsArr);
                 textPane.setText(s);
 
-                textFieldAddSVByID.setText("");
+                textFieldAddSVByLP.setText("");
 
                 this.addServiceVisitCleanup();
             } catch (NumberFormatException ex) {
@@ -221,14 +249,13 @@ public class UpdateVehicle {
         });
 
         this.buttonAddServiceVisitDesc.addActionListener(e -> {
-            if (this.serviceDescsCount < 10) {
-                this.serviceDescsCount++;
-
+            if (this.serviceDescsTextFields.size() < 10) {
                 JPanel newRow = new JPanel(new GridBagLayout());
                 GridBagConstraints gbc = new GridBagConstraints();
 
-                JLabel label = new JLabel("Description " + this.serviceDescsCount);
+                JLabel label = new JLabel("Description " + (this.serviceDescsTextFields.size() + 1));
                 JTextField textField = new JTextField(10);
+                JButton button = removeItemButton(this.panelServiceDescs, this.serviceDescsTextFields, this.serviceDescsLabels, label, textField, newRow);
 
                 gbc.gridx = 0;
                 gbc.gridy = 0;
@@ -236,9 +263,16 @@ public class UpdateVehicle {
                 gbc.insets = new Insets(5, 5, 5, 5);
                 newRow.add(label, gbc);
 
+                gbc.gridx = 2;
+                gbc.gridy = 0;
+                gbc.gridwidth = 1;
+                gbc.insets = new Insets(5, 0, 5, 5);
+                gbc.fill = GridBagConstraints.NONE;
+                newRow.add(button, gbc);
+
                 gbc.gridx = 1;
                 gbc.gridy = 0;
-                gbc.gridwidth = 2;
+                gbc.gridwidth = 1;
                 gbc.insets = new Insets(5, 5, 5, 5);
                 gbc.fill = GridBagConstraints.HORIZONTAL;
                 gbc.weightx = 1.0;
@@ -247,12 +281,42 @@ public class UpdateVehicle {
                 this.panelServiceDescs.add(newRow);
                 this.panelServiceDescs.revalidate();
                 this.panelServiceDescs.repaint();
-                this.contentPane.revalidate();
-                this.contentPane.repaint();
 
                 this.serviceDescsTextFields.add(textField);
+                this.serviceDescsLabels.add(label);
             }
         });
+    }
+
+    private void updateVehicleCleanup() {
+        textFieldUpdateName.setText("");
+        textFieldUpdateSurname.setText("");
+        textFieldUpdateCustomerID.setText("");
+        textFieldUpdateLicensePlate.setText("");
+
+        this.panelInScrollPaneUpdateSV.removeAll();
+        this.panelInScrollPaneUpdateSV.revalidate();
+        this.panelInScrollPaneUpdateSV.repaint();
+    }
+
+    private JButton removeItemButton(JPanel panel, ArrayList<JTextField> textFields, ArrayList<JLabel> labels, JLabel label, JTextField textField, JPanel newRow) {
+        JButton button = new JButton("×");
+        button.setPreferredSize(new Dimension(20, 20));
+        button.setBackground(new Color(48, 6, 4));
+
+        button.addActionListener(eInner -> {
+            textFields.remove(textField);
+            labels.remove(label);
+
+            for (int i = 0; i < labels.size(); i++) {
+                labels.get(i).setText("Description " + (i + 1));
+            }
+
+            panel.remove(newRow);
+            panel.revalidate();
+            panel.repaint();
+        });
+        return button;
     }
 
     public JPanel getPanel() {
@@ -263,6 +327,14 @@ public class UpdateVehicle {
         int serviceVisitsCount = foundVehicle.getServiceVisitsCount();
         this.panelsUpdateServiceVisits = new ArrayList<>();
         this.panelInScrollPaneUpdateSV.removeAll();
+        this.panelInScrollPaneUpdateSV.revalidate();
+        this.panelInScrollPaneUpdateSV.repaint();
+
+        if (serviceVisitsCount == 0) {
+            JLabel label = new JLabel("No service visits to update.");
+            label.setBorder(new EmptyBorder(10, 10, 10, 10));
+            this.panelInScrollPaneUpdateSV.add(label, BorderLayout.NORTH);
+        }
 
         for (int i = 0; i < serviceVisitsCount; i++) {
             PanelUpdateServiceVisits panelUpdateServiceVisits = new PanelUpdateServiceVisits(i);
@@ -287,7 +359,100 @@ public class UpdateVehicle {
 
             panelUpdateServiceVisits.getTextFieldUpdatePrice().setText(String.valueOf(serviceVisit.getPrice()));
 
+            int updateServiceDescsCount = serviceVisit.getServiceDescriptionsCount();
+
+            for (int j = 0; j < updateServiceDescsCount; j++) {
+                JPanel newRow = new JPanel(new GridBagLayout());
+                GridBagConstraints gbc = new GridBagConstraints();
+
+                JLabel label = new JLabel("Description " + (j + 1));
+                JTextField textField = new JTextField(10);
+                textField.setText(serviceVisit.getServiceDescriptions()[j]);
+                JButton button = removeItemButton(panelUpdateServiceVisits.getPanelServiceDescs(),
+                        panelUpdateServiceVisits.getServiceDescsTextFields(),
+                        panelUpdateServiceVisits.getServiceDescsLabels(),
+                        label, textField, newRow);
+
+                gbc.gridx = 0;
+                gbc.gridy = 0;
+                gbc.gridwidth = 1;
+                gbc.insets = new Insets(5, 5, 5, 5);
+                newRow.add(label, gbc);
+
+                gbc.gridx = 2;
+                gbc.gridy = 0;
+                gbc.gridwidth = 1;
+                gbc.insets = new Insets(5, 0, 5, 5);
+                gbc.fill = GridBagConstraints.NONE;
+                newRow.add(button, gbc);
+
+                gbc.gridx = 1;
+                gbc.gridy = 0;
+                gbc.gridwidth = 1;
+                gbc.insets = new Insets(5, 5, 5, 5);
+                gbc.fill = GridBagConstraints.HORIZONTAL;
+                gbc.weightx = 1.0;
+                newRow.add(textField, gbc);
+
+                panelUpdateServiceVisits.getPanelServiceDescs().add(newRow);
+                panelUpdateServiceVisits.getPanelServiceDescs().revalidate();
+                panelUpdateServiceVisits.getPanelServiceDescs().repaint();
+
+                panelUpdateServiceVisits.getServiceDescsTextFields().add(textField);
+                panelUpdateServiceVisits.getServiceDescsLabels().add(label);
+            }
+
             this.panelsUpdateServiceVisits.add(panelUpdateServiceVisits);
+        }
+
+        for (PanelUpdateServiceVisits panel : this.panelsUpdateServiceVisits) {
+            JButton buttonAddServiceVisitDesc = panel.getButtonAddServiceVisitDesc();
+
+            JPanel serviceDescsPanel = panel.getPanelServiceDescs();
+            ArrayList<JTextField> serviceDescsTextFields = panel.getServiceDescsTextFields();
+            ArrayList<JLabel> serviceDescsLabels = panel.getServiceDescsLabels();
+
+            buttonAddServiceVisitDesc.addActionListener(e -> {
+                if (serviceDescsTextFields.size() < 10) {
+                    JPanel newRow = new JPanel(new GridBagLayout());
+                    GridBagConstraints gbc = new GridBagConstraints();
+
+                    JLabel label = new JLabel("Description " + (serviceDescsTextFields.size() + 1));
+                    JTextField textField = new JTextField(10);
+                    JButton button = removeItemButton(serviceDescsPanel,
+                            serviceDescsTextFields,
+                            serviceDescsLabels,
+                            label, textField, newRow);
+
+                    gbc.gridx = 0;
+                    gbc.gridy = 0;
+                    gbc.gridwidth = 1;
+                    gbc.insets = new Insets(5, 5, 5, 5);
+                    newRow.add(label, gbc);
+
+                    gbc.gridx = 2;
+                    gbc.gridy = 0;
+                    gbc.gridwidth = 1;
+                    gbc.insets = new Insets(5, 0, 5, 5);
+                    gbc.fill = GridBagConstraints.NONE;
+                    newRow.add(button, gbc);
+
+                    gbc.gridx = 1;
+                    gbc.gridy = 0;
+                    gbc.gridwidth = 1;
+                    gbc.insets = new Insets(5, 5, 5, 5);
+                    gbc.fill = GridBagConstraints.HORIZONTAL;
+                    gbc.weightx = 1.0;
+                    newRow.add(textField, gbc);
+
+                    serviceDescsPanel.add(newRow);
+                    serviceDescsPanel.revalidate();
+                    serviceDescsPanel.repaint();
+
+                    serviceDescsTextFields.add(textField);
+                    serviceDescsLabels.add(label);
+                }
+            });
         }
     }
 
@@ -303,11 +468,8 @@ public class UpdateVehicle {
         this.panelServiceDescs.removeAll();
         this.panelServiceDescs.revalidate();
         this.panelServiceDescs.repaint();
-        this.contentPane.revalidate();
-        this.contentPane.repaint();
 
         this.serviceDescsTextFields = new ArrayList<>();
-        this.serviceDescsCount = 0;
     }
 
     private int addServiceVisitHelper() {

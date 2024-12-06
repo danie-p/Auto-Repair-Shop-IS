@@ -1,5 +1,6 @@
 import Controller.Controller;
 import GUI.AutoRepairShopGUI;
+import GUI.InitDialog;
 import Model.Model;
 import Testing.Tester;
 import com.formdev.flatlaf.FlatDarkLaf;
@@ -24,11 +25,24 @@ public class Main {
 //        tester.runSmallHeapFileTestOnVehicles(clusterSizeSmall);
 //        tester.runHeapFileTestOnVehicles("test", clusterSize, operationsCount, initDataAmount);
 
+        FlatDarkLaf.setup();
 
-        Model model = new Model(clusterSize, "heap", "hash_by_id", "hash_by_lp");
+//        String[] fileNames = InitDialog.showInitDialog();
+//        if (fileNames == null) {
+//            System.exit(0);
+//        }
+//
+//        String heapFileName = fileNames[0];
+//        String hashFileByIDName = fileNames[1];
+//        String hashFileByLPName = fileNames[2];
+
+        String heapFileName = "heap";
+        String hashFileByIDName = "hashID";
+        String hashFileByLPName = "hashLP";
+
+        Model model = new Model(clusterSize, heapFileName, hashFileByIDName, hashFileByLPName);
         Controller controller = new Controller(model);
 
-        FlatDarkLaf.setup();
         SwingUtilities.invokeLater(() -> {
             AutoRepairShopGUI gui = new AutoRepairShopGUI(controller);
             gui.setVisible(true);
