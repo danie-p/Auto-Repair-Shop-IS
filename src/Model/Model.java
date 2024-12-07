@@ -1,6 +1,6 @@
 package Model;
 
-import ExtendibleHashFile.ExtendibleHashFile;
+import ExtendibleHashFile.*;
 import FileDataStructure.Block;
 import HeapFile.HeapFile;
 
@@ -17,12 +17,17 @@ public class Model {
     public Model(int clusterSize,
                  String heapFileName, String extHashFileByIDName, String extHashFileByLPName,
                  String controlHeapFileName, String controlHashFileByIDName, String controlHashFileByLPName) {
-        this.heapFileVehicles = new HeapFile<Vehicle>(heapFileName, clusterSize, new Vehicle("", "", -1, "", null));
-        this.extHashFileByID = new ExtendibleHashFile<VehicleByCustomerID>(extHashFileByIDName, clusterSize, new VehicleByCustomerID(-1, -1));
-        this.extHashFileByLP = new ExtendibleHashFile<VehicleByLicensePlate>(extHashFileByLPName, clusterSize, new VehicleByLicensePlate(-1, ""));
+        Vehicle exampleVehicle = new Vehicle("", "", -1, "", null);
+        VehicleByCustomerID exampleVehicleByID = new VehicleByCustomerID(-1, -1);
+        VehicleByLicensePlate exampleVehicleByLP = new VehicleByLicensePlate(-1, "");
+
         this.controlHeapFileName = controlHeapFileName;
         this.controlHashFileByIDName = controlHashFileByIDName;
         this.controlHashFileByLPName = controlHashFileByLPName;
+
+        this.heapFileVehicles = HeapFile.fromFile(this.controlHeapFileName, heapFileName, clusterSize, exampleVehicle);
+        this.extHashFileByID = ExtendibleHashFile.fromFile(this.controlHashFileByIDName, extHashFileByIDName, clusterSize, exampleVehicleByID);
+        this.extHashFileByLP = ExtendibleHashFile.fromFile(this.controlHashFileByLPName, extHashFileByLPName, clusterSize, exampleVehicleByLP);
     }
 
     public void clearData() throws IOException {

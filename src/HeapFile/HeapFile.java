@@ -1,8 +1,10 @@
 package HeapFile;
 
 import FileDataStructure.*;
+import Model.Vehicle;
 
 import java.io.*;
+import java.util.Scanner;
 
 public class HeapFile<T extends IData<T>> extends FileDataStructure<T> {
     // adresa prveho ciastocne volneho bloku (zaciatok zretazenia ciastocne volnych blokov)
@@ -11,6 +13,30 @@ public class HeapFile<T extends IData<T>> extends FileDataStructure<T> {
     public HeapFile(String fileName, int clusterSize, T record) {
         super(fileName, clusterSize, record);
         this.partiallyEmpty = -1;
+    }
+
+    public HeapFile(String fileName, int clusterSize, int fullyEmpty, int partiallyEmpty, int blocksCount, T record) {
+        super(fileName, clusterSize, fullyEmpty, blocksCount, record);
+        this.partiallyEmpty = partiallyEmpty;
+    }
+
+    public static <T extends IData<T>> HeapFile<T> fromFile(String controlHeapFileName, String heapFileName, int clusterSize, T record) {
+        File fileControlHeap = new File(controlHeapFileName + ".txt");
+
+        if (fileControlHeap.length() != 0) {
+            try (Scanner scanner = new Scanner(fileControlHeap)) {
+                int fullyEmpty = scanner.nextInt();
+                int blocksCount = scanner.nextInt();
+                int partiallyEmpty = scanner.nextInt();
+
+                scanner.close();
+                return new HeapFile<T>(heapFileName, clusterSize, fullyEmpty, partiallyEmpty, blocksCount, record);
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException("Error during data import heap file opening!");
+            }
+        } else {
+            return new HeapFile<T>(heapFileName, clusterSize, record);
+        }
     }
 
     public void clear() throws IOException {
@@ -210,10 +236,9 @@ public class HeapFile<T extends IData<T>> extends FileDataStructure<T> {
      */
     @Override
     public void close(String fileName) {
-        try (BufferedWriter writer = super.writeControlInfo(fileName)) {
-            writer.write("Partially_empty: " + this.partiallyEmpty);
-            writer.newLine();
-
+        try (PrintWriter writer = super.writeControlInfo(fileName)) {
+            writer.println(this.partiallyEmpty);
+            writer.close();
             this.file.close();
         } catch (IOException e) {
             throw new RuntimeException("Error during heap file closing!");

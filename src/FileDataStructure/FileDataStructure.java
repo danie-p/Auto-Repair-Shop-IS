@@ -32,6 +32,21 @@ public abstract class FileDataStructure<T extends IData<T>> {
         }
     }
 
+    protected FileDataStructure(String fileName, int clusterSize, int fullyEmpty, int blocksCount, T record) {
+        this.exampleRecord = record;
+        this.clusterSize = clusterSize;
+        this.recordSize = record.getSize();
+        this.blocksCount = blocksCount;
+        this.fullyEmpty = fullyEmpty;
+        this.fileName = fileName;
+
+        try {
+            this.file = new RandomAccessFile(fileName + ".dat", "rw");
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException("Error during file opening!");
+        }
+    }
+
     protected void clear() throws IOException {
         this.file.setLength(0);
         this.fullyEmpty = -1;
@@ -106,22 +121,6 @@ public abstract class FileDataStructure<T extends IData<T>> {
         }
 
         return sb.toString();
-    }
-
-    /**
-     * Metóda na zatvorenie súboru. Je potrebné ju zavolať pre korektné ukončenie práce so súborom.
-     */
-    protected BufferedWriter writeControlInfo(String fileName) throws IOException {
-        String controlInfoFileName = fileName + ".txt";
-        BufferedWriter writer = new BufferedWriter(new FileWriter(controlInfoFileName));
-        writer.write("Cluster_size: " + this.clusterSize);
-        writer.newLine();
-        writer.write("Fully_empty: " + this.fullyEmpty);
-        writer.newLine();
-        writer.write("Blocks_count: " + this.blocksCount);
-        writer.newLine();
-
-        return writer;
     }
 
     /**
@@ -215,6 +214,18 @@ public abstract class FileDataStructure<T extends IData<T>> {
             // pokracuj kontrolou noveho posledneho bloku
             newLastBlock = this.readBlockFromFile(this.blocksCount - 1);
         }
+    }
+
+    /**
+     * Metóda na zatvorenie súboru. Je potrebné ju zavolať pre korektné ukončenie práce so súborom.
+     */
+    protected PrintWriter writeControlInfo(String fileName) throws IOException {
+        String controlInfoFileName = fileName + ".txt";
+        PrintWriter writer = new PrintWriter(new FileWriter(controlInfoFileName));
+        writer.println(this.fullyEmpty);
+        writer.println(this.blocksCount);
+
+        return writer;
     }
 
     public abstract void close(String fileName);

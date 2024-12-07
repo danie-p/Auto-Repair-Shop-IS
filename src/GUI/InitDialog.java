@@ -1,6 +1,10 @@
 package GUI;
 
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import java.awt.*;
 import java.awt.event.*;
 
 public class InitDialog extends JDialog {
@@ -14,12 +18,17 @@ public class InitDialog extends JDialog {
     private JTextField controlTextFieldHeapFileName;
     private JTextField controlTextFieldHashFileByIDName;
     private JTextField controlTextFieldHashFileByLPName;
+    private JTextField textFieldGeneratorFileName;
+    private JPanel panelData;
+    private JPanel panelControlData;
+    private JPanel panelGeneratorControlData;
     private static String heapFileName;
     private static String hashByIDFileName;
     private static String hashByLPFileName;
     private static String controlHeapFileName;
     private static String controlHashByIDFileName;
     private static String controlHashByLPFileName;
+    private static String generatorFileName;
 
     public InitDialog() {
         setTitle("Init Auto Repair Shop Information System");
@@ -27,17 +36,23 @@ public class InitDialog extends JDialog {
         setModal(true);
         getRootPane().setDefaultButton(buttonOK);
 
-        buttonOK.addActionListener(new ActionListener() {
+        this.initTextBorders();
+
+        this.buttonOK.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 onOK();
             }
         });
 
-        buttonCancel.addActionListener(new ActionListener() {
+        this.buttonCancel.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 onCancel();
             }
         });
+
+        this.updateTextFields(this.textFieldHeapFileName, this.controlTextFieldHeapFileName);
+        this.updateTextFields(this.textFieldHashFileByIDName, this.controlTextFieldHashFileByIDName);
+        this.updateTextFields(this.textFieldHashFileByLPName, this.controlTextFieldHashFileByLPName);
 
         // call onCancel() when cross is clicked
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
@@ -64,8 +79,11 @@ public class InitDialog extends JDialog {
         controlHashByIDFileName = this.controlTextFieldHashFileByIDName.getText();
         controlHashByLPFileName = this.controlTextFieldHashFileByLPName.getText();
 
+        generatorFileName = this.textFieldGeneratorFileName.getText();
+
         if (heapFileName.isBlank() || hashByIDFileName.isBlank() || hashByLPFileName.isBlank() ||
-                controlHeapFileName.isBlank() || controlHashByIDFileName.isBlank() || controlHashByLPFileName.isBlank()) {
+                controlHeapFileName.isBlank() || controlHashByIDFileName.isBlank() || controlHashByLPFileName.isBlank() ||
+                generatorFileName.isBlank()) {
             this.textPane.setText("Please enter all file names!");
             return;
         }
@@ -82,6 +100,7 @@ public class InitDialog extends JDialog {
         controlHeapFileName = null;
         controlHashByIDFileName = null;
         controlHashByLPFileName = null;
+        generatorFileName = null;
 
         dispose();
     }
@@ -93,9 +112,47 @@ public class InitDialog extends JDialog {
         dialog.setVisible(true);
 
         if (heapFileName == null || hashByIDFileName == null || hashByLPFileName == null ||
-                controlHeapFileName == null || controlHashByIDFileName == null || controlHashByLPFileName == null)
+                controlHeapFileName == null || controlHashByIDFileName == null || controlHashByLPFileName == null ||
+                generatorFileName == null)
             return null;
 
-        return new String[]{heapFileName, hashByIDFileName, hashByLPFileName, controlHeapFileName, controlHashByIDFileName, controlHashByLPFileName};
+        return new String[]{heapFileName, hashByIDFileName, hashByLPFileName, controlHeapFileName, controlHashByIDFileName, controlHashByLPFileName, generatorFileName};
+    }
+
+    private void updateTextFields(JTextField fromTextField, JTextField toTextField) {
+        fromTextField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                updateControlTextField();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                updateControlTextField();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                updateControlTextField();
+            }
+
+            private void updateControlTextField() {
+                toTextField.setText(fromTextField.getText());
+            }
+        });
+    }
+
+    private void initTextBorders() {
+        TitledBorder titledBorderData= BorderFactory.createTitledBorder("Store data/Import stored data");
+        titledBorderData.setTitleFont(titledBorderData.getTitleFont().deriveFont(Font.BOLD));
+        this.panelData.setBorder(titledBorderData);
+
+        TitledBorder titledBorderControlData= BorderFactory.createTitledBorder("Store control data/Import control data");
+        titledBorderControlData.setTitleFont(titledBorderControlData.getTitleFont().deriveFont(Font.BOLD));
+        this.panelControlData.setBorder(titledBorderControlData);
+
+        TitledBorder titledBorderGeneratorControlData= BorderFactory.createTitledBorder("Store generator control data/Import generator control data");
+        titledBorderGeneratorControlData.setTitleFont(titledBorderGeneratorControlData.getTitleFont().deriveFont(Font.BOLD));
+        this.panelGeneratorControlData.setBorder(titledBorderGeneratorControlData);
     }
 }

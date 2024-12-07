@@ -3,7 +3,15 @@ package Tools;
 import java.util.Random;
 
 public class StringGenerator {
-    private static long uniqueStringCounter = 0;
+    private static long uniqueStringCounter = 0; // TODO
+
+    public static long getUniqueStringCounter() {
+        return uniqueStringCounter;
+    }
+
+    public static void setUniqueStringCounter(long uniqueStringCounter) {
+        StringGenerator.uniqueStringCounter = uniqueStringCounter;
+    }
 
     public static String generateRandomString(int minLength, int maxLength) {
         String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";

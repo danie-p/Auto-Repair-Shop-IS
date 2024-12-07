@@ -1,23 +1,32 @@
 package Controller;
 
+import ExtendibleHashFile.DirectoryItem;
 import Model.*;
 import Tools.Constants;
 import Tools.StringGenerator;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Random;
+import java.util.Scanner;
 
 public class Controller {
     private final Model model;
-    private int customerIDCounter;
+
+    private static int customerIDCounter = 0; // TODO
 
     public Controller(Model model) {
         this.model = model;
-        this.customerIDCounter = 0;
     }
 
-    public int getCustomerIDCounter() {
+    public static int getCustomerIDCounter() {
         return customerIDCounter;
+    }
+
+    public static void setCustomerIDCounter(int customerIDCounter) {
+        Controller.customerIDCounter = customerIDCounter;
     }
 
     public void clearData() throws IOException {

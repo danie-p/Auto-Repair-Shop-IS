@@ -1,12 +1,19 @@
 import Controller.Controller;
+import ExtendibleHashFile.DirectoryItem;
 import GUI.AutoRepairShopGUI;
 import GUI.InitDialog;
+import HeapFile.HeapFile;
 import Model.Model;
 import Testing.Tester;
+import Tools.StringGenerator;
 import com.formdev.flatlaf.FlatDarkLaf;
 
 import javax.swing.*;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) throws IOException {
@@ -35,7 +42,7 @@ public class Main {
         Controller controller = getController(fileNames, clusterSize);
 
         SwingUtilities.invokeLater(() -> {
-            AutoRepairShopGUI gui = new AutoRepairShopGUI(controller);
+            AutoRepairShopGUI gui = new AutoRepairShopGUI(controller, fileNames[6]);
             gui.setVisible(true);
         });
     }
@@ -51,6 +58,9 @@ public class Main {
 //        String heapFileName = "heap";
 //        String hashFileByIDName = "hashID";
 //        String hashFileByLPName = "hashLP";
+//        String controlHeapFileName = "heap";
+//        String controlHashFileByIDName = "hashID";
+//        String controlHashFileByLPName = "hashLP";
 
         Model model = new Model(clusterSize,
                 heapFileName, hashFileByIDName, hashFileByLPName,
@@ -58,4 +68,6 @@ public class Main {
 
         return new Controller(model);
     }
+
+
 }

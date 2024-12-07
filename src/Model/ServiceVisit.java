@@ -130,7 +130,7 @@ public class ServiceVisit {
 
         for (int i = 0; i < serviceDescriptionsCount; i++) {
             String substr = serviceDescriptions[i].substring(0, descLengths[i]);
-            sb.append(substr);
+            sb.append("'").append(substr).append("'");
 
             if (i != serviceDescriptionsCount - 1)
                 sb.append(", ");

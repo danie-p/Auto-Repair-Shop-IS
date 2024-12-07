@@ -1,11 +1,16 @@
 package ExtendibleHashFile;
 
 import FileDataStructure.*;
+import Model.VehicleByCustomerID;
 import Tools.BitSetUtility;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Scanner;
 
 public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructure<T> {
     private int fileDepth; // D
@@ -27,17 +32,44 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
         this.directory.add(new DirectoryItem(-1, 1));
     }
 
+    public ExtendibleHashFile(String fileName, int clusterSize, int fullyEmpty, int blocksCount, T record, int fileDepth, ArrayList<DirectoryItem> directory) {
+        super(fileName, clusterSize, fullyEmpty, blocksCount, record);
+        this.fileDepth = fileDepth;
+        this.directory = directory;
+    }
+
+    public static <T extends IHashData<T>> ExtendibleHashFile<T> fromFile(String controlHashFileName, String hashFileName, int clusterSize, T record) {
+        File fileControlHash = new File(controlHashFileName + ".txt");
+
+        if (fileControlHash.length() != 0) {
+            try (Scanner scanner = new Scanner(fileControlHash)) {
+                int fullyEmpty = scanner.nextInt();
+                int blocksCount = scanner.nextInt();
+                int fileDepth = scanner.nextInt();
+                scanner.nextLine();
+
+                ArrayList<DirectoryItem> directory = new ArrayList<>();
+                while (scanner.hasNextLine()) {
+                    String line = scanner.nextLine();
+                    directory.add(DirectoryItem.fromCSV(line));
+                }
+
+                scanner.close();
+                return new ExtendibleHashFile<T>(hashFileName, clusterSize, fullyEmpty, blocksCount, record, fileDepth, directory);
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException("Error during data import extendible hash file opening!");
+            }
+        } else {
+            return new ExtendibleHashFile<T>(hashFileName, clusterSize, record);
+        }
+    }
+
     public void clear() throws IOException {
         super.clear();
         this.fileDepth = 1;
         this.directory = new ArrayList<>();
         this.directory.add(new DirectoryItem(-1, 1));
         this.directory.add(new DirectoryItem(-1, 1));
-    }
-
-    @Override
-    public void close(String fileName) {
-        // TODO: implementovat zatvaranie rozsiritelneho hesovacieho suboru s ulozenim riadiacic dat
     }
 
     private int getDirectoryIndex(T record) {
@@ -257,5 +289,21 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
      */
     public T delete(T recordWithKey) {
         return null;
+    }
+
+    @Override
+    public void close(String fileName) {
+        try (PrintWriter writer = super.writeControlInfo(fileName)) {
+            writer.println(this.fileDepth);
+
+            for (DirectoryItem directoryItem : this.directory) {
+                writer.println(directoryItem.toCSV());
+            }
+
+            writer.close();
+            this.file.close();
+        } catch (IOException e) {
+            throw new RuntimeException("Error during extendible hash file closing!");
+        }
     }
 }
