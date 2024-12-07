@@ -53,26 +53,6 @@ public abstract class FileDataStructure<T extends IData<T>> {
         this.blocksCount = 0;
     }
 
-    /**
-     * Metóda slúži len pre potreby testovania štruktúry. Sprístupňuje všetky záznamy uložené v súbore.
-     * @return HashSet všetkých záznamov uložených v súbore
-     */
-    public HashSet<T> getAllDataInFileDataStructure() throws IOException {
-        HashSet<T> allDataSet = new HashSet<>();
-
-        int i = 0;
-        while (i < this.file.length() / this.clusterSize) {
-            Block<T> readBlock = this.readBlockFromFile(i);
-            if (readBlock != null) {
-                ArrayList<T> validRecords = readBlock.getValidRecords();
-                allDataSet.addAll(validRecords);
-            }
-            i++;
-        }
-
-        return allDataSet;
-    }
-
     public void writeBlockIntoFile(int blockAddress, Block<T> block) throws IOException {
         // seek na adresu zapisovaneho bloku
         this.file.seek((long) blockAddress * this.clusterSize);
@@ -214,6 +194,26 @@ public abstract class FileDataStructure<T extends IData<T>> {
             // pokracuj kontrolou noveho posledneho bloku
             newLastBlock = this.readBlockFromFile(this.blocksCount - 1);
         }
+    }
+
+    /**
+     * Metóda slúži len pre potreby testovania štruktúry. Sprístupňuje všetky záznamy uložené v súbore.
+     * @return HashSet všetkých záznamov uložených v súbore
+     */
+    public HashSet<T> getAllDataInFileDataStructure() throws IOException {
+        HashSet<T> allDataSet = new HashSet<>();
+
+        int i = 0;
+        while (i < this.file.length() / this.clusterSize) {
+            Block<T> readBlock = this.readBlockFromFile(i);
+            if (readBlock != null) {
+                ArrayList<T> validRecords = readBlock.getValidRecords();
+                allDataSet.addAll(validRecords);
+            }
+            i++;
+        }
+
+        return allDataSet;
     }
 
     /**

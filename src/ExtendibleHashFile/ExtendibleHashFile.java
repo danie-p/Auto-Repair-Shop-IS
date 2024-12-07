@@ -1,7 +1,6 @@
 package ExtendibleHashFile;
 
 import FileDataStructure.*;
-import Model.VehicleByCustomerID;
 import Tools.BitSetUtility;
 
 import java.io.File;
@@ -28,8 +27,8 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
         // na zaciatku adresar obsahuje 2 polozky
         // obe polozky ukazuju na zaciatok suboru (adresa 0)
         // oba bloky maju hlbku d = 1
-        this.directory.add(new DirectoryItem(-1, 1));
-        this.directory.add(new DirectoryItem(-1, 1));
+        this.directory.add(new DirectoryItem(-1, 1, -1));
+        this.directory.add(new DirectoryItem(-1, 1, -1));
     }
 
     public ExtendibleHashFile(String fileName, int clusterSize, int fullyEmpty, int blocksCount, T record, int fileDepth, ArrayList<DirectoryItem> directory) {
@@ -68,8 +67,8 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
         super.clear();
         this.fileDepth = 1;
         this.directory = new ArrayList<>();
-        this.directory.add(new DirectoryItem(-1, 1));
-        this.directory.add(new DirectoryItem(-1, 1));
+        this.directory.add(new DirectoryItem(-1, 1, -1));
+        this.directory.add(new DirectoryItem(-1, 1, -1));
     }
 
     private int getDirectoryIndex(T record) {
@@ -84,6 +83,30 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
         }
 
         // tieto bity prekonvertuj BIN -> DEC
+
+        return BitSetUtility.bitSetToInt(firstDBits, this.fileDepth);
+    }
+
+    private int getDirectoryIndexNeighbour(T record, int localDepth) {
+        BitSet hash = record.getHash();
+
+        // nastav iba prvych d - 1 (localDepth - 1) bitov,
+        BitSet firstDBits = new BitSet(this.fileDepth);
+        for (int i = 0; i < localDepth - 1; i++) {
+            if (hash.get(i))
+                firstDBits.set(i);
+        }
+
+        // posledny bit podla localDepth
+        if (hash.get(localDepth - 1)) {
+            // ak je na poslednom bit podla localDepth nastavena 1, sused tam ma 0
+            firstDBits.clear(localDepth - 1);
+        } else {
+            // ak je na poslednom bit podla localDepth nastavena 0, sused tam ma 1
+            firstDBits.set(localDepth - 1);
+        }
+
+        // ostatne bity nechaj na 0
 
         return BitSetUtility.bitSetToInt(firstDBits, this.fileDepth);
     }
@@ -126,8 +149,9 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
 
             DirectoryItem directoryItem = this.directory.get(directoryIndex);
             // ziskaj adresu bloku, do ktoreho sa ma zaznam vlozit
-            int blockAddress = directoryItem.getAddress();
+            int blockAddress = directoryItem.getBlockAddress();
             int localDepth = directoryItem.getLocalDepth();
+            int validCount = directoryItem.getValidCount();
 
             // index do adresara na prvej pozicii, kde sa nachadza prvok s danou adresou bloku
             // na ziskanie indexu sa pouzije len prvych localDepth bitov, ostatne su vynulovane
@@ -151,12 +175,12 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
                     this.blocksCount++;
                 }
 
-                this.directory.set(directoryIndex, new DirectoryItem(blockAddress, localDepth));
+                this.directory.set(directoryIndex, new DirectoryItem(blockAddress, localDepth, validCount));
             }
 
-            if (blockToInsertInto.isFull()) {
-                int numOfSameDirectoryItems = 1 << (this.fileDepth - localDepth);
+            int numOfSameDirectoryItems = 1 << (this.fileDepth - localDepth);
 
+            if (blockToInsertInto.isFull()) {
                 for (int i = 0; i < numOfSameDirectoryItems; i++) {
                     this.directory.get(directoryIndex + i).incrementLocalDepth();
                 }
@@ -175,6 +199,12 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
                 blockToInsertInto.insertRecord(record);
                 // zapis blok do suboru
                 this.writeBlockIntoFile(blockAddress, blockToInsertInto);
+
+                // aktualizuj valid count v adresari
+                for (int i = 0; i < numOfSameDirectoryItems; i++) {
+                    this.directory.get(directoryIndex + i).setValidCount(blockToInsertInto.getValidCount());
+                }
+
                 hasBeenInserted = true;
                 System.out.println("Inserted record bitset: " + this.bitSetToString(record.getHash()));
             }
@@ -197,7 +227,7 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
         ArrayList<DirectoryItem> doubledDirectory = new ArrayList<>(this.directory.size() * 2);
         for (DirectoryItem directoryItem : this.directory) {
             doubledDirectory.add(directoryItem);
-            doubledDirectory.add(new DirectoryItem(directoryItem.getAddress(), directoryItem.getLocalDepth()));
+            doubledDirectory.add(new DirectoryItem(directoryItem.getBlockAddress(), directoryItem.getLocalDepth(), directoryItem.getValidCount()));
         }
         this.directory = doubledDirectory;
 
@@ -231,11 +261,17 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
 
             // zneplatni odkazy na prazdny blok v adresari
             for (int i = 0; i < numOfSameDirectoryItems; i++) {
-                this.directory.get(directoryIndex + i).setAddress(-1);
+                DirectoryItem item = this.directory.get(directoryIndex + i);
+                item.setBlockAddress(-1);
+                item.setValidCount(-1);
             }
         } else {
             // ak je stary blok neprazdny, aktualizuj ho
             this.writeBlockIntoFile(oldBlockAddress, oldBlock);
+
+            for (int i = 0; i < numOfSameDirectoryItems; i++) {
+                this.directory.get(directoryIndex + i).setValidCount(oldBlock.getValidCount());
+            }
         }
 
         int newDirectoryIndex = directoryIndex + numOfSameDirectoryItems;
@@ -258,11 +294,15 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
             this.writeBlockIntoFile(newBlockAddress, newBlock);
 
             for (int i = 0; i < numOfSameDirectoryItems; i++) {
-                this.directory.get(newDirectoryIndex + i).setAddress(newBlockAddress);
+                DirectoryItem item = this.directory.get(newDirectoryIndex + i);
+                item.setBlockAddress(newBlockAddress);
+                item.setValidCount(newBlock.getValidCount());
             }
         } else {
             for (int i = 0; i < numOfSameDirectoryItems; i++) {
-                this.directory.get(newDirectoryIndex + i).setAddress(-1);
+                DirectoryItem item = this.directory.get(newDirectoryIndex + i);
+                item.setBlockAddress(-1);
+                item.setValidCount(-1);
             }
         }
     }
@@ -273,7 +313,7 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
      */
     public T get(T recordWithKey) throws IOException {
         int directoryIndex = this.getDirectoryIndex(recordWithKey);
-        int blockAddress = this.directory.get(directoryIndex).getAddress();
+        int blockAddress = this.directory.get(directoryIndex).getBlockAddress();
 
         Block<T> blockFoundByKey = this.readBlockFromFile(blockAddress);
 
@@ -287,7 +327,88 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
      * @param recordWithKey záznam s nastaveným kľúčovým atribútom, podľa ktorého vyhľadávame a mažeme
      * @return záznam vymazaný z hešovacieho súboru
      */
-    public T delete(T recordWithKey) {
+    public T delete(T recordWithKey) throws IOException {
+        int directoryIndex = this.getDirectoryIndex(recordWithKey);
+        int blockAddress = this.directory.get(directoryIndex).getBlockAddress();
+        int localDepth = this.directory.get(directoryIndex).getLocalDepth();
+
+        Block<T> blockFoundByKey = this.readBlockFromFile(blockAddress);
+
+        if (blockFoundByKey == null)
+            return null;
+
+        int blockingFactor = blockFoundByKey.getBlockingFactor();
+
+        // najdi blok a vymaz z neho zaznam
+        blockFoundByKey.deleteRecord(recordWithKey);
+        this.directory.get(directoryIndex).setValidCount(blockFoundByKey.getValidCount());
+        int validCount = blockFoundByKey.getValidCount();
+
+        // TODO cyklicky
+        // TODO blok s hlbkou 1 NEzlucujem so susedom (vzdy mi ostanu aspon 2 polozky v adresari)
+
+        int directoryIndexNeighbour = this.getDirectoryIndexNeighbour(recordWithKey, localDepth);
+
+        int localDepthNeighbour = this.directory.get(directoryIndexNeighbour).getLocalDepth();
+        if (localDepth != localDepthNeighbour) {
+            // ak sused nema rovnaku localDepth, nie je to sused
+            // TODO blok bez suseda po vymazani zaznamu ostane prazdny => sprava prazdneho bloku
+            // bez reorganizacie
+            this.writeBlockIntoFile(blockAddress, blockFoundByKey);
+        } else {
+            // nasiel sa sused, skontroluj jeho pocet zaznamov
+            int validCountNeighbour = this.directory.get(directoryIndexNeighbour).getValidCount();
+
+            if (validCount + validCountNeighbour <= blockingFactor) {
+                // ak po zruseni zostane v susednych blokoch iba tolko zaznamov, ze sa zmestia do jedineho bloku
+                // zniz jeho localDepth
+                localDepth--;
+                // TODO uz ziadny blok nema localDepth == this.fileDepth => zniz hlbku suboru, zmensi adresar
+
+                int directoryIndexMoveTo = this.maskDirectoryIndexByLocalDepth(recordWithKey, localDepth);
+                int blockAddressMoveTo = this.directory.get(directoryIndexMoveTo).getBlockAddress();
+                int blockAddressNeighbour = this.directory.get(directoryIndexNeighbour).getBlockAddress();
+
+                // presun zaznamy do jedineho bloku
+                Block<T> moveToBlock = this.readBlockFromFile(blockAddressMoveTo);
+
+                int moveFromBlockAddress;
+                if (directoryIndexMoveTo == directoryIndex) {
+                    moveFromBlockAddress = blockAddressNeighbour;
+                } else {
+                    moveFromBlockAddress = blockAddress;
+                }
+
+                Block<T> moveFromBlock = this.readBlockFromFile(moveFromBlockAddress);
+                ArrayList<T> recordsToMove = moveFromBlock.getValidRecords();
+                // zrus platnost vsetkych starych zaznamov
+                moveFromBlock.setValidCount(0);
+
+                // presun zaznamy
+                for (T record : recordsToMove) {
+                    moveToBlock.insertRecord(record);
+                }
+
+                // zapis zmeny
+                this.writeBlockIntoFile(blockAddressMoveTo, moveToBlock);
+
+                // uvolni prazdny blok
+                this.manageFullyEmptyBlock(moveFromBlockAddress , moveFromBlock);
+
+                int numOfSameDirectoryItems = 1 << (this.fileDepth - localDepth);
+                for (int i = 0; i < numOfSameDirectoryItems; i++) {
+                    DirectoryItem item = this.directory.get(directoryIndexMoveTo + i);
+                    item.setBlockAddress(blockAddressMoveTo);
+                    item.setLocalDepth(localDepth);
+                    item.setValidCount(moveToBlock.getValidCount());
+                }
+            } else {
+                // po zruseni zostane spolu so susedom viac zaznamov ako je blokovaci faktor
+                // bez reorganizacie
+                this.writeBlockIntoFile(blockAddress, blockFoundByKey);
+            }
+        }
+
         return null;
     }
 
@@ -305,5 +426,14 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
         } catch (IOException e) {
             throw new RuntimeException("Error during extendible hash file closing!");
         }
+    }
+
+    @Override
+    public String toString() {
+        return "ExtendibleHashFile{" +
+                "fileDepth=" + fileDepth +
+                ", fullyEmpty=" + fullyEmpty +
+                ", blocksCount=" + blocksCount +
+                '}';
     }
 }

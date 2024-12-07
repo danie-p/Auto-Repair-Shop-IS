@@ -78,9 +78,9 @@ public class Tester {
         TestData data13 = new TestData("Puchov", 237);
         TestData data14 = new TestData("Ilava", 240);
         TestData data15 = new TestData("Brezno", 60);
-        TestData data16 = new TestData("Bratislava", 61);
-        TestData data17 = new TestData("Skalica", 189);
-        TestData data18 = new TestData("Bytca", 253);
+//        TestData data16 = new TestData("Bratislava", 61);
+//        TestData data17 = new TestData("Skalica", 189);
+//        TestData data18 = new TestData("Bytca", 253);
 
         ExtendibleHashFile<TestData> extTest = new ExtendibleHashFile<TestData>("test_hash", clusterSize, data1);
         extTest.insert(data1);
@@ -98,14 +98,21 @@ public class Tester {
         extTest.insert(data12);
         extTest.insert(data13);
 
-        extTest.insert(data16);
-        extTest.insert(data17);
-        extTest.insert(data18);
+//        extTest.insert(data16);
+//        extTest.insert(data17);
+//        extTest.insert(data18);
 
         extTest.insert(data14);
         extTest.insert(data15);
 
+        extTest.delete(data9);  // Poprad
+        extTest.delete(data10); // Lucenec
+        extTest.delete(data11); // Zvolen
+        extTest.delete(data12); // Presov
+//        extTest.delete(data4);  // Levice
+
         System.out.println(extTest.readSequentially());
+        System.out.println(extTest);
 
         for (int id : ids) {
             System.out.println(extTest.get(new TestData("Mesto", id)));

@@ -244,4 +244,13 @@ public class HeapFile<T extends IData<T>> extends FileDataStructure<T> {
             throw new RuntimeException("Error during heap file closing!");
         }
     }
+
+    @Override
+    public String toString() {
+        return "HeapFile{" +
+                "partiallyEmpty=" + partiallyEmpty +
+                ", fullyEmpty=" + fullyEmpty +
+                ", blocksCount=" + blocksCount +
+                '}';
+    }
 }

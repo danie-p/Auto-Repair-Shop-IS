@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.ArrayList;
 
 public class Block<T extends IData<T>> implements IRecord {
-    private ArrayList<T> records;
+    private final ArrayList<T> records;
     private int validCount;
     private int next;
     private int previous;
@@ -32,6 +32,10 @@ public class Block<T extends IData<T>> implements IRecord {
             validRecords.add(this.records.get(i));
         }
         return validRecords;
+    }
+
+    public int getBlockingFactor() {
+        return this.records.size();
     }
 
     public boolean isPartiallyEmpty() {

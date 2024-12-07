@@ -25,26 +25,26 @@ public class Main {
         Tester tester = new Tester();
 
         // EXT HASH FILE TESTS
-//        tester.runSmallExtHashFileTestOnTowns(100);
+        tester.runSmallExtHashFileTestOnTowns(100);
 //        tester.runExtHashFileTestOnVehicles("test", clusterSize, operationsCount, initDataAmount);
 
         // HEAP FILE TESTS
 //        tester.runSmallHeapFileTestOnVehicles(clusterSizeSmall);
 //        tester.runHeapFileTestOnVehicles("test", clusterSize, operationsCount, initDataAmount);
 
-        FlatDarkLaf.setup();
-
-        String[] fileNames = InitDialog.showInitDialog();
-        if (fileNames == null) {
-            System.exit(0);
-        }
-
-        Controller controller = getController(fileNames, clusterSize);
-
-        SwingUtilities.invokeLater(() -> {
-            AutoRepairShopGUI gui = new AutoRepairShopGUI(controller, fileNames[6]);
-            gui.setVisible(true);
-        });
+//        FlatDarkLaf.setup();
+//
+//        String[] fileNames = InitDialog.showInitDialog();
+//        if (fileNames == null) {
+//            System.exit(0);
+//        }
+//
+//        Controller controller = getController(fileNames, clusterSize);
+//
+//        SwingUtilities.invokeLater(() -> {
+//            AutoRepairShopGUI gui = new AutoRepairShopGUI(controller, fileNames[6]);
+//            gui.setVisible(true);
+//        });
     }
 
     private static Controller getController(String[] fileNames, int clusterSize) {
