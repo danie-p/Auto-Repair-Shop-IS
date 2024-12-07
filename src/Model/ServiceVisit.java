@@ -102,11 +102,46 @@ public class ServiceVisit {
             }
         }
 
-        return "\tServiceVisit {" +
+        return "ServiceVisit {" +
                 "date=" + LocalDateTime.ofEpochSecond(date, 0, ZoneOffset.UTC) +
                 ", price=" + price +
-                ", serviceDescriptions: " + sb +
+                ", serviceDescriptions=" + sb +
                 '}';
+    }
+
+    public String toStringAttributes() {
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < serviceDescriptionsCount; i++) {
+            String substr = serviceDescriptions[i].substring(0, descLengths[i]);
+            sb.append("\n     ").append(substr);
+        }
+
+        if (serviceDescriptionsCount == 0)
+            sb.append("\n     None");
+
+        return "Date: " + LocalDateTime.ofEpochSecond(date, 0, ZoneOffset.UTC) +
+                "\nPrice: " + price +
+                "\nService Descriptions:" + sb;
+    }
+
+    public String toStringAttributesOneLine() {
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < serviceDescriptionsCount; i++) {
+            String substr = serviceDescriptions[i].substring(0, descLengths[i]);
+            sb.append(substr);
+
+            if (i != serviceDescriptionsCount - 1)
+                sb.append(", ");
+        }
+
+        if (serviceDescriptionsCount == 0)
+            sb.append("None");
+
+        return "Date: " + LocalDateTime.ofEpochSecond(date, 0, ZoneOffset.UTC) +
+                "; Price: " + price +
+                "; Service Descriptions: " + sb;
     }
 
     @Override

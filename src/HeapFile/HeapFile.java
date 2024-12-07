@@ -208,8 +208,9 @@ public class HeapFile<T extends IData<T>> extends FileDataStructure<T> {
     /**
      * Metóda na zatvorenie súboru. Je potrebné ju zavolať pre korektné ukončenie práce so súborom.
      */
-    public void close() {
-        try (BufferedWriter writer = super.writeControlInfo()) {
+    @Override
+    public void close(String fileName) {
+        try (BufferedWriter writer = super.writeControlInfo(fileName)) {
             writer.write("Partially_empty: " + this.partiallyEmpty);
             writer.newLine();
 

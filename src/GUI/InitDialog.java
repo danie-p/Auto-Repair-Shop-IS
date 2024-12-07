@@ -10,10 +10,16 @@ public class InitDialog extends JDialog {
     private JTextField textFieldHeapFileName;
     private JTextField textFieldHashFileByIDName;
     private JTextField textFieldHashFileByLPName;
-    private JTextPane textPaneInfo;
+    private JTextPane textPane;
+    private JTextField controlTextFieldHeapFileName;
+    private JTextField controlTextFieldHashFileByIDName;
+    private JTextField controlTextFieldHashFileByLPName;
     private static String heapFileName;
     private static String hashByIDFileName;
     private static String hashByLPFileName;
+    private static String controlHeapFileName;
+    private static String controlHashByIDFileName;
+    private static String controlHashByLPFileName;
 
     public InitDialog() {
         setTitle("Init Auto Repair Shop Information System");
@@ -54,12 +60,17 @@ public class InitDialog extends JDialog {
         hashByIDFileName = this.textFieldHashFileByIDName.getText();
         hashByLPFileName = this.textFieldHashFileByLPName.getText();
 
-        if (heapFileName.isBlank() || hashByIDFileName.isBlank() || hashByLPFileName.isBlank()) {
-            this.textPaneInfo.setText("Please enter all file names!");
+        controlHeapFileName = this.controlTextFieldHeapFileName.getText();
+        controlHashByIDFileName = this.controlTextFieldHashFileByIDName.getText();
+        controlHashByLPFileName = this.controlTextFieldHashFileByLPName.getText();
+
+        if (heapFileName.isBlank() || hashByIDFileName.isBlank() || hashByLPFileName.isBlank() ||
+                controlHeapFileName.isBlank() || controlHashByIDFileName.isBlank() || controlHashByLPFileName.isBlank()) {
+            this.textPane.setText("Please enter all file names!");
             return;
         }
 
-        this.textPaneInfo.setText("");
+        this.textPane.setText("");
 
         dispose();
     }
@@ -68,6 +79,10 @@ public class InitDialog extends JDialog {
         heapFileName = null;
         hashByIDFileName = null;
         hashByLPFileName = null;
+        controlHeapFileName = null;
+        controlHashByIDFileName = null;
+        controlHashByLPFileName = null;
+
         dispose();
     }
 
@@ -77,9 +92,10 @@ public class InitDialog extends JDialog {
         dialog.setLocationRelativeTo(null);
         dialog.setVisible(true);
 
-        if (heapFileName == null || hashByIDFileName == null || hashByLPFileName == null)
+        if (heapFileName == null || hashByIDFileName == null || hashByLPFileName == null ||
+                controlHeapFileName == null || controlHashByIDFileName == null || controlHashByLPFileName == null)
             return null;
 
-        return new String[]{heapFileName, hashByIDFileName, hashByLPFileName};
+        return new String[]{heapFileName, hashByIDFileName, hashByLPFileName, controlHeapFileName, controlHashByIDFileName, controlHashByLPFileName};
     }
 }

@@ -36,7 +36,7 @@ public class Controller {
         Vehicle foundVehicle = this.model.getVehicleByID(customerID);
 
         if (foundVehicle != null)
-            return "The following vehicle was found in the system by customer ID = [" + customerID + "] :\n" + foundVehicle;
+            return "The following vehicle was found in the system by customer ID = [" + customerID + "] :\n" + foundVehicle.toStringAttributes();
 
         return "Vehicle search was unsuccessful!";
     }
@@ -45,7 +45,7 @@ public class Controller {
         Vehicle foundVehicle = this.model.getVehicleByLP(licensePlate);
 
         if (foundVehicle != null)
-            return "The following vehicle was found in the system by license plate code = [" + licensePlate + "] :\n" + foundVehicle;
+            return "The following vehicle was found in the system by license plate code = [" + licensePlate + "] :\n" + foundVehicle.toStringAttributes();
 
         return "Vehicle search was unsuccessful!";
     }
@@ -65,7 +65,7 @@ public class Controller {
         this.model.insertVehicle(insertedVehicle);
         this.customerIDCounter++;
 
-        return "The following vehicle was inserted into the system:\n" + insertedVehicle;
+        return "The following vehicle was inserted into the system:\n" + insertedVehicle.toStringAttributes();
     }
 
     public String addServiceVisitByID(int customerID, int date, double price, String[] serviceDescs) throws IOException {
@@ -73,7 +73,7 @@ public class Controller {
         Vehicle vehicleWithAddedSV = this.model.insertServiceVisitByID(insertedServiceVisit, customerID);
 
         if (vehicleWithAddedSV != null)
-            return "A new service visit was added to the following vehicle found by customer ID = [" + customerID + "] :\n" + vehicleWithAddedSV;
+            return "A new service visit was added to the following vehicle found by customer ID = [" + customerID + "] :\n" + vehicleWithAddedSV.toStringAttributes();
 
         return "Service visit insertion was unsuccessful!";
     }
@@ -83,7 +83,7 @@ public class Controller {
         Vehicle vehicleWithAddedSV = this.model.insertServiceVisitByLP(insertedServiceVisit, licensePlate);
 
         if (vehicleWithAddedSV != null)
-            return "A new service visit was added to the following vehicle found by license plate = [" + licensePlate + "] :\n" + vehicleWithAddedSV;
+            return "A new service visit was added to the following vehicle found by license plate = [" + licensePlate + "] :\n" + vehicleWithAddedSV.toStringAttributes();
 
         return "Service visit insertion was unsuccessful!";
     }
@@ -92,26 +92,26 @@ public class Controller {
                                     String customerName, String customerSurname, int customerID, String licensePlateCode,
                                     ServiceVisit[] serviceVisits) throws IOException {
         Vehicle newVehicle = new Vehicle(customerName, customerSurname, customerID, licensePlateCode, serviceVisits);
-        Vehicle oldFoundVehicle = this.model.updateVehicleByID(oldVehicle, newVehicle);
-
-        return this.updateVehicleHelper(oldFoundVehicle, newVehicle);
-    }
-
-    public String updateVehicleByLP(Vehicle oldVehicle,
-                                    String customerName, String customerSurname, int customerID, String licensePlateCode,
-                                    ServiceVisit[] serviceVisits) throws IOException {
-        Vehicle newVehicle = new Vehicle(customerName, customerSurname, customerID, licensePlateCode, serviceVisits);
-        Vehicle oldFoundVehicle = this.model.updateVehicleByLP(oldVehicle, newVehicle);
+        Vehicle oldFoundVehicle = this.model.updateVehicle(oldVehicle, newVehicle);
 
         return this.updateVehicleHelper(oldFoundVehicle, newVehicle);
     }
 
     private String updateVehicleHelper(Vehicle oldFoundVehicle, Vehicle newVehicle) {
         if (oldFoundVehicle != null)
-            return "The following vehicle was updated in the system\nfrom: " + oldFoundVehicle +
-                    "\nto: " + newVehicle;
+            return "The following vehicle was updated in the system\nfrom: " + oldFoundVehicle.toStringAttributes() +
+                    "\nto: " + newVehicle.toStringAttributes();
 
         return "Vehicle update was unsuccessful!";
+    }
+
+    public String removeServiceVisit(Vehicle vehicle, int serviceVisitIndex) throws IOException {
+        Vehicle vehicleWithRemovedSV = this.model.removeServiceVisitFromVehicle(vehicle, serviceVisitIndex);
+
+        if (vehicleWithRemovedSV != null)
+            return "The selected service visit was removed from the following vehicle:\n" + vehicleWithRemovedSV.toStringAttributes();
+
+        return "Service visit removal was unsuccessful!";
     }
 
     public String readHeapFileSequentially() throws IOException {
@@ -156,5 +156,9 @@ public class Controller {
             Vehicle randomVehicle = new Vehicle(customerName, customerSurname, customerID, licensePlateCode, serviceVisits);
             this.model.insertVehicle(randomVehicle);
         }
+    }
+
+    public void close() {
+        this.model.close();
     }
 }

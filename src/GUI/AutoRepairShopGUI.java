@@ -4,6 +4,8 @@ import Controller.Controller;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class AutoRepairShopGUI extends JFrame {
     private JPanel contentPane;
@@ -28,7 +30,7 @@ public class AutoRepairShopGUI extends JFrame {
         setExtendedState(JFrame.MAXIMIZED_BOTH);
 
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setContentPane(this.contentPane);
 
         this.cardLayout = new CardLayout();
@@ -40,6 +42,14 @@ public class AutoRepairShopGUI extends JFrame {
         this.comboBoxMenu.addActionListener(e -> {
             String selectedOperation = (String) this.comboBoxMenu.getSelectedItem();
             this.cardLayout.show(this.panelOfContents, selectedOperation);
+        });
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                controller.close();
+                System.exit(0);
+            }
         });
     }
 }

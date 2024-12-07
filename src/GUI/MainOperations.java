@@ -102,10 +102,15 @@ public class MainOperations {
             try {
                 String licensePlate = textFieldFindByLP.getText();
 
+                if (licensePlate == null)
+                    throw new IllegalArgumentException();
+
                 String s = this.controller.getVehicleByLP(licensePlate);
                 textPane.setText(s);
 
                 textFieldFindByLP.setText("");
+            } catch (IllegalArgumentException ex) {
+                textPane.setText("Please enter valid inputs!");
             } catch (IOException ex) {
                 textPane.setText("Input/Output operation was unsuccessful!" + ex);
             }
@@ -130,6 +135,9 @@ public class MainOperations {
             try {
                 String s = this.controller.readHeapFileSequentially();
                 textPane.setText("Sequential output of Heap File:\n" + s);
+                SwingUtilities.invokeLater(() -> {
+                    this.scrollPane.getViewport().setViewPosition(new Point(0, 0));
+                });
             } catch (IOException ex) {
                 textPane.setText("Input/Output operation was unsuccessful!" + ex);
             }
@@ -139,6 +147,9 @@ public class MainOperations {
             try {
                 String s = this.controller.readExtHashFileByIDSequentially();
                 textPane.setText("Sequential output of Extendible Hash File by Customer ID:\n" + s);
+                SwingUtilities.invokeLater(() -> {
+                    this.scrollPane.getViewport().setViewPosition(new Point(0, 0));
+                });
             } catch (IOException ex) {
                 textPane.setText("Input/Output operation was unsuccessful!" + ex);
             }
@@ -148,6 +159,9 @@ public class MainOperations {
             try {
                 String s = this.controller.readExtHashFileByLPSequentially();
                 textPane.setText("Sequential output of Extendible Hash File by License Plate:\n" + s);
+                SwingUtilities.invokeLater(() -> {
+                    this.scrollPane.getViewport().setViewPosition(new Point(0, 0));
+                });
             } catch (IOException ex) {
                 textPane.setText("Input/Output operation was unsuccessful!" + ex);
             }

@@ -111,8 +111,8 @@ public abstract class FileDataStructure<T extends IData<T>> {
     /**
      * Metóda na zatvorenie súboru. Je potrebné ju zavolať pre korektné ukončenie práce so súborom.
      */
-    protected BufferedWriter writeControlInfo() throws IOException {
-        String controlInfoFileName = this.fileName + ".txt";
+    protected BufferedWriter writeControlInfo(String fileName) throws IOException {
+        String controlInfoFileName = fileName + ".txt";
         BufferedWriter writer = new BufferedWriter(new FileWriter(controlInfoFileName));
         writer.write("Cluster_size: " + this.clusterSize);
         writer.newLine();
@@ -216,4 +216,6 @@ public abstract class FileDataStructure<T extends IData<T>> {
             newLastBlock = this.readBlockFromFile(this.blocksCount - 1);
         }
     }
+
+    public abstract void close(String fileName);
 }

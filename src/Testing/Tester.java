@@ -186,6 +186,6 @@ public class Tester {
 
         System.out.println(heapFile.readSequentially());
 
-        heapFile.close();
+        heapFile.close("hf1");
     }
 }

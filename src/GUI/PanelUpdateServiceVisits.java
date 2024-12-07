@@ -1,10 +1,18 @@
 package GUI;
 
+import Model.ServiceVisit;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
+
+import static GUI.UpdateVehicle.*;
 
 public class PanelUpdateServiceVisits {
     private JPanel contentPane;
@@ -44,48 +52,53 @@ public class PanelUpdateServiceVisits {
         this.contentPane.setBorder(new EmptyBorder(10, 0, 10, 0));
     }
 
+    public ServiceVisit getServiceVisit() {
+        LocalDateTime dateTime = parseDateTime(textFieldUpdateYear, textFieldUpdateMonth, textFieldUpdateDay, textFieldUpdateHour, textFieldUpdateMinute, textFieldUpdateSecond);
+        int date = (int) dateTime.toEpochSecond(ZoneOffset.UTC);
+
+        double price = Double.parseDouble(textFieldUpdatePrice.getText());
+
+        String[] serviceDescriptions = new String[serviceDescsTextFields.size()];
+        for (int j = 0; j < serviceDescsTextFields.size(); j++) {
+            serviceDescriptions[j] = serviceDescsTextFields.get(j).getText();
+        }
+
+        return new ServiceVisit(date, price, serviceDescriptions);
+    }
+
+    public void updateServiceVisit(ServiceVisit serviceVisit) {
+        int date = serviceVisit.getDate();
+        LocalDateTime dateTime = Instant.ofEpochSecond(date).atZone(ZoneId.systemDefault()).toLocalDateTime();
+
+        textFieldUpdateDay.setText(String.valueOf(dateTime.getDayOfMonth()));
+        textFieldUpdateMonth.setText(String.valueOf(dateTime.getMonthValue()));
+        textFieldUpdateYear.setText(String.valueOf(dateTime.getYear()));
+        textFieldUpdateHour.setText(String.valueOf(dateTime.getHour()));
+        textFieldUpdateMinute.setText(String.valueOf(dateTime.getMinute()));
+        textFieldUpdateSecond.setText(String.valueOf(dateTime.getSecond()));
+
+        textFieldUpdatePrice.setText(String.valueOf(serviceVisit.getPrice()));
+
+        int updateServiceDescsCount = serviceVisit.getServiceDescriptionsCount();
+
+        for (int j = 0; j < updateServiceDescsCount; j++) {
+            JPanel newRow = new JPanel(new GridBagLayout());
+            GridBagConstraints gbc = new GridBagConstraints();
+
+            JLabel label = new JLabel("Description " + (j + 1));
+            JTextField textField = new JTextField(10);
+            textField.setText(serviceVisit.getServiceDescriptions()[j]);
+            addNewRowServiceDescs(newRow, gbc, label, textField, panelServiceDescs, serviceDescsTextFields, serviceDescsLabels);
+        }
+    }
+
     public JPanel getPanel() {
         return this.contentPane;
     }
 
-    public JTextField getTextFieldUpdateDay() {
-        return textFieldUpdateDay;
-    }
-
-    public JTextField getTextFieldUpdateYear() {
-        return textFieldUpdateYear;
-    }
-
-    public JTextField getTextFieldUpdateMonth() {
-        return textFieldUpdateMonth;
-    }
-
-    public JTextField getTextFieldUpdateHour() {
-        return textFieldUpdateHour;
-    }
-
-    public JTextField getTextFieldUpdateMinute() {
-        return textFieldUpdateMinute;
-    }
-
-    public JTextField getTextFieldUpdateSecond() {
-        return textFieldUpdateSecond;
-    }
-
-    public JTextField getTextFieldUpdatePrice() {
-        return textFieldUpdatePrice;
-    }
 
     public JButton getButtonAddServiceVisitDesc() {
         return buttonAddServiceVisitDesc;
-    }
-
-    public JScrollPane getScrollPaneServiceDesc() {
-        return scrollPaneServiceDesc;
-    }
-
-    public JLabel getLabelUpdateSV() {
-        return labelUpdateSV;
     }
 
     public JPanel getPanelServiceDescs() {

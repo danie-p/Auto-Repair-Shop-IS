@@ -65,6 +65,13 @@ public class Vehicle implements IHashData<Vehicle> {
         return true;
     }
 
+    public void removeServiceVisit(int serviceVisitIndex) {
+        ServiceVisit currLastValid = this.serviceVisits[this.serviceVisitsCount - 1];
+        // aktualne posledny platny zaznam prehod na miesto mazaneho zaznamu
+        this.serviceVisits[serviceVisitIndex] = currLastValid;
+        this.serviceVisitsCount--;
+    }
+
     @Override
     public Vehicle createClass() {
         return new Vehicle("", "", 0, "", null);
@@ -157,7 +164,7 @@ public class Vehicle implements IHashData<Vehicle> {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         for (ServiceVisit serviceVisit : serviceVisits) {
-            sb.append("\n\t").append(serviceVisit);
+            sb.append("\n\t\t").append(serviceVisit);
         }
 
         return "Vehicle {" +
@@ -167,6 +174,24 @@ public class Vehicle implements IHashData<Vehicle> {
                 ", licensePlateCode='" + licensePlateCode + '\'' +
                 "," + sb +
                 '}';
+    }
+
+    public String toStringAttributes() {
+        StringBuilder sb = new StringBuilder();
+
+        for (byte i = 0; i < this.serviceVisitsCount; i++) {
+            sb.append("\n          ").append(this.serviceVisits[i].toStringAttributesOneLine());
+        }
+
+        if (this.serviceVisitsCount == 0)
+            sb.append("\n          None");
+
+        return "Vehicle" +
+                "\n     Customer name: '" + customerName + '\'' +
+                "\n     Customer surname: '" + customerSurname + '\'' +
+                "\n     Customer ID: " + customerID +
+                "\n     License plate code: '" + licensePlateCode + '\'' +
+                "\n     Service visits: " + sb;
     }
 
     @Override

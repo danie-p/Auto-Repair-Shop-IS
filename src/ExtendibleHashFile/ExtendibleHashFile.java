@@ -35,6 +35,11 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
         this.directory.add(new DirectoryItem(-1, 1));
     }
 
+    @Override
+    public void close(String fileName) {
+        // TODO: implementovat zatvaranie rozsiritelneho hesovacieho suboru s ulozenim riadiacic dat
+    }
+
     private int getDirectoryIndex(T record) {
         // vysledkom je index v adresari, na ktorom je ulozena hladana adresa
         BitSet hash = record.getHash();

@@ -27,25 +27,35 @@ public class Main {
 
         FlatDarkLaf.setup();
 
-//        String[] fileNames = InitDialog.showInitDialog();
-//        if (fileNames == null) {
-//            System.exit(0);
-//        }
-//
-//        String heapFileName = fileNames[0];
-//        String hashFileByIDName = fileNames[1];
-//        String hashFileByLPName = fileNames[2];
+        String[] fileNames = InitDialog.showInitDialog();
+        if (fileNames == null) {
+            System.exit(0);
+        }
 
-        String heapFileName = "heap";
-        String hashFileByIDName = "hashID";
-        String hashFileByLPName = "hashLP";
-
-        Model model = new Model(clusterSize, heapFileName, hashFileByIDName, hashFileByLPName);
-        Controller controller = new Controller(model);
+        Controller controller = getController(fileNames, clusterSize);
 
         SwingUtilities.invokeLater(() -> {
             AutoRepairShopGUI gui = new AutoRepairShopGUI(controller);
             gui.setVisible(true);
         });
+    }
+
+    private static Controller getController(String[] fileNames, int clusterSize) {
+        String heapFileName = fileNames[0];
+        String hashFileByIDName = fileNames[1];
+        String hashFileByLPName = fileNames[2];
+        String controlHeapFileName = fileNames[3];
+        String controlHashFileByIDName = fileNames[4];
+        String controlHashFileByLPName = fileNames[5];
+
+//        String heapFileName = "heap";
+//        String hashFileByIDName = "hashID";
+//        String hashFileByLPName = "hashLP";
+
+        Model model = new Model(clusterSize,
+                heapFileName, hashFileByIDName, hashFileByLPName,
+                controlHeapFileName, controlHashFileByIDName, controlHashFileByLPName);
+
+        return new Controller(model);
     }
 }

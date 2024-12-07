@@ -105,7 +105,7 @@
               <scrollpane id="cc35d" binding="scrollPaneUpdateSV">
                 <constraints>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
-                    <preferred-size width="510" height="350"/>
+                    <preferred-size width="510" height="310"/>
                   </grid>
                 </constraints>
                 <properties/>
@@ -203,7 +203,7 @@
       <scrollpane id="ecbcd" binding="scrollPane">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="3" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
-            <preferred-size width="-1" height="300"/>
+            <preferred-size width="-1" height="200"/>
           </grid>
         </constraints>
         <properties/>
@@ -481,7 +481,7 @@
               <scrollpane id="c49a8" binding="scrollPaneDeleteSV">
                 <constraints>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
-                    <preferred-size width="-1" height="200"/>
+                    <preferred-size width="-1" height="320"/>
                   </grid>
                 </constraints>
                 <properties/>

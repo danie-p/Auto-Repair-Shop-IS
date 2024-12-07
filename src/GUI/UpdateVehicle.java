@@ -9,9 +9,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.io.IOException;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 
@@ -92,6 +90,9 @@ public class UpdateVehicle {
         this.panelInScrollPaneUpdateSV.setLayout(new BoxLayout(this.panelInScrollPaneUpdateSV, BoxLayout.Y_AXIS));
         this.scrollPaneUpdateSV.setViewportView(this.panelInScrollPaneUpdateSV);
 
+        this.panelInScrollPaneDeleteSV.setLayout(new BoxLayout(this.panelInScrollPaneDeleteSV, BoxLayout.Y_AXIS));
+        this.scrollPaneDeleteSV.setViewportView(this.panelInScrollPaneDeleteSV);
+
         this.scrollPaneServiceDesc.getVerticalScrollBar().setUnitIncrement(16);
         this.scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         this.scrollPaneUpdateSV.getVerticalScrollBar().setUnitIncrement(16);
@@ -132,6 +133,9 @@ public class UpdateVehicle {
             try {
                 String licensePlate = textFieldFindByLPToUpdate.getText();
 
+                if (licensePlate == null)
+                    throw new IllegalArgumentException();
+
                 Vehicle foundVehicle = this.controller.getVehicleByLPAsObject(licensePlate);
                 this.oldVehicle = foundVehicle;
 
@@ -150,7 +154,7 @@ public class UpdateVehicle {
                 }
 
                 textFieldFindByLPToUpdate.setText("");
-            } catch (NumberFormatException ex) {
+            } catch (IllegalArgumentException ex) {
                 textPane.setText("Please enter valid inputs!");
             } catch (IOException ex) {
                 textPane.setText("Input/Output operation was unsuccessful!" + ex);
@@ -167,26 +171,7 @@ public class UpdateVehicle {
                 ServiceVisit[] serviceVisits = new ServiceVisit[this.panelsUpdateServiceVisits.size()];
                 for (int i = 0; i < this.panelsUpdateServiceVisits.size(); i++) {
                     PanelUpdateServiceVisits panelsUpdateServiceVisit = this.panelsUpdateServiceVisits.get(i);
-
-                    int year = Integer.parseInt(panelsUpdateServiceVisit.getTextFieldUpdateYear().getText());
-                    int month = Integer.parseInt(panelsUpdateServiceVisit.getTextFieldUpdateMonth().getText());
-                    int day = Integer.parseInt(panelsUpdateServiceVisit.getTextFieldUpdateDay().getText());
-                    int hour = Integer.parseInt(panelsUpdateServiceVisit.getTextFieldUpdateHour().getText());
-                    int minute = Integer.parseInt(panelsUpdateServiceVisit.getTextFieldUpdateMinute().getText());
-                    int second = Integer.parseInt(panelsUpdateServiceVisit.getTextFieldUpdateSecond().getText());
-                    LocalDateTime dateTime = LocalDateTime.of(year, month, day, hour, minute, second);
-                    int date = (int) dateTime.toEpochSecond(ZoneOffset.UTC);
-
-                    double price = Double.parseDouble(panelsUpdateServiceVisit.getTextFieldUpdatePrice().getText());
-
-                    ArrayList<JTextField> serviceDescsTextFields = panelsUpdateServiceVisit.getServiceDescsTextFields();
-                    String[] serviceDescriptions = new String[serviceDescsTextFields.size()];
-                    for (int j = 0; j < serviceDescsTextFields.size(); j++) {
-                        serviceDescriptions[j] = serviceDescsTextFields.get(j).getText();
-                    }
-
-                    ServiceVisit serviceVisit = new ServiceVisit(date, price, serviceDescriptions);
-                    serviceVisits[i] = serviceVisit;
+                    serviceVisits[i] = panelsUpdateServiceVisit.getServiceVisit();
                 }
 
                 String s = this.controller.updateVehicleByID(this.oldVehicle, name, surname, customerID, licensePlate, serviceVisits);
@@ -203,7 +188,7 @@ public class UpdateVehicle {
         this.buttonAddServiceVisitByID.addActionListener(e -> {
             try {
                 int customerID = Integer.parseInt(textFieldAddSVByID.getText());
-                int date = this.addServiceVisitHelper();
+                int date = this.parseDateTime();
                 double price = Double.parseDouble(textFieldAddPrice.getText());
 
                 String[] serviceDescsArr = new String[this.serviceDescsTextFields.size()];
@@ -227,7 +212,7 @@ public class UpdateVehicle {
         this.buttonAddServiceVisitByLP.addActionListener(e -> {
             try {
                 String licensePlate = textFieldAddSVByLP.getText();
-                int date = this.addServiceVisitHelper();
+                int date = this.parseDateTime();
                 double price = Double.parseDouble(textFieldAddPrice.getText());
 
                 String[] serviceDescsArr = new String[this.serviceDescsTextFields.size()];
@@ -257,26 +242,7 @@ public class UpdateVehicle {
                 JTextField textField = new JTextField(10);
                 JButton button = removeItemButton(this.panelServiceDescs, this.serviceDescsTextFields, this.serviceDescsLabels, label, textField, newRow);
 
-                gbc.gridx = 0;
-                gbc.gridy = 0;
-                gbc.gridwidth = 1;
-                gbc.insets = new Insets(5, 5, 5, 5);
-                newRow.add(label, gbc);
-
-                gbc.gridx = 2;
-                gbc.gridy = 0;
-                gbc.gridwidth = 1;
-                gbc.insets = new Insets(5, 0, 5, 5);
-                gbc.fill = GridBagConstraints.NONE;
-                newRow.add(button, gbc);
-
-                gbc.gridx = 1;
-                gbc.gridy = 0;
-                gbc.gridwidth = 1;
-                gbc.insets = new Insets(5, 5, 5, 5);
-                gbc.fill = GridBagConstraints.HORIZONTAL;
-                gbc.weightx = 1.0;
-                newRow.add(textField, gbc);
+                initItemsToAddNewRow(newRow, gbc, label, textField, button);
 
                 this.panelServiceDescs.add(newRow);
                 this.panelServiceDescs.revalidate();
@@ -286,6 +252,90 @@ public class UpdateVehicle {
                 this.serviceDescsLabels.add(label);
             }
         });
+
+        this.buttonFindByIDToDeleteSV.addActionListener(e -> {
+            try {
+                this.panelInScrollPaneDeleteSV.removeAll();
+
+                int customerID = Integer.parseInt(this.textFieldFindByIDToDeleteSV.getText());
+                Vehicle foundVehicle = this.controller.getVehicleByIDAsObject(customerID);
+
+                if (foundVehicle == null) {
+                    textPane.setText("Vehicle with Customer ID = [" + customerID + "] could not be found!");
+                } else {
+                    this.removeServiceVisitHelper(foundVehicle);
+
+                    if (foundVehicle.getServiceVisitsCount() == 0) {
+                        textPane.setText("Vehicle with Customer ID = [" + customerID + "] has no service visits to delete!");
+                    } else {
+                        textPane.setText("Vehicle with Customer ID = [" + customerID + "] was found and its service visits can be deleted.");
+                    }
+                }
+
+                this.panelInScrollPaneDeleteSV.revalidate();
+                this.panelInScrollPaneDeleteSV.repaint();
+                this.textFieldFindByIDToDeleteSV.setText("");
+            } catch (NumberFormatException ex) {
+                textPane.setText("Please enter valid inputs!");
+            } catch (IOException ex) {
+                textPane.setText("Input/Output operation was unsuccessful!" + ex);
+            }
+        });
+
+        this.buttonFindByLPToDeleteSV.addActionListener(e -> {
+            try {
+                this.panelInScrollPaneDeleteSV.removeAll();
+
+                String licensePlate = this.textFieldFindByLPToDeleteSV.getText();
+
+                if (licensePlate == null)
+                    throw new IllegalArgumentException();
+
+                Vehicle foundVehicle = this.controller.getVehicleByLPAsObject(licensePlate);
+
+                if (foundVehicle == null) {
+                    textPane.setText("Vehicle with License Plate Code = [" + licensePlate + "] could not be found!");
+                } else {
+                    this.removeServiceVisitHelper(foundVehicle);
+
+                    if (foundVehicle.getServiceVisitsCount() == 0) {
+                        textPane.setText("Vehicle with License Plate Code = [" + licensePlate + "] has no service visits to delete!");
+                    } else {
+                        textPane.setText("Vehicle with License Plate Code = [" + licensePlate + "] was found and its service visits can be deleted.");
+                    }
+                }
+
+                this.panelInScrollPaneDeleteSV.revalidate();
+                this.panelInScrollPaneDeleteSV.repaint();
+                this.textFieldFindByLPToDeleteSV.setText("");
+            } catch (IllegalArgumentException ex) {
+                textPane.setText("Please enter valid inputs!");
+            } catch (IOException ex) {
+                textPane.setText("Input/Output operation was unsuccessful!" + ex);
+            }
+        });
+    }
+
+    private void removeServiceVisitHelper(Vehicle foundVehicle) {
+        for (int i = 0; i < foundVehicle.getServiceVisitsCount(); i++) {
+            ServiceVisit serviceVisit = foundVehicle.getServiceVisits()[i];
+
+            PanelDeleteServiceVisit panelDeleteServiceVisit = new PanelDeleteServiceVisit(serviceVisit, i);
+            JPanel panel = panelDeleteServiceVisit.getPanel();
+            this.panelInScrollPaneDeleteSV.add(panel);
+
+            int finalI = i;
+            panelDeleteServiceVisit.getButton().addActionListener(e -> {
+                try {
+                    textPane.setText(this.controller.removeServiceVisit(foundVehicle, finalI));
+                } catch (IOException ex) {
+                    this.textPane.setText("Input/Output operation was unsuccessful!" + ex);
+                }
+                this.panelInScrollPaneDeleteSV.removeAll();
+                this.panelInScrollPaneDeleteSV.revalidate();
+                this.panelInScrollPaneDeleteSV.repaint();
+            });
+        }
     }
 
     private void updateVehicleCleanup() {
@@ -299,7 +349,7 @@ public class UpdateVehicle {
         this.panelInScrollPaneUpdateSV.repaint();
     }
 
-    private JButton removeItemButton(JPanel panel, ArrayList<JTextField> textFields, ArrayList<JLabel> labels, JLabel label, JTextField textField, JPanel newRow) {
+    public static JButton removeItemButton(JPanel panel, ArrayList<JTextField> textFields, ArrayList<JLabel> labels, JLabel label, JTextField textField, JPanel newRow) {
         JButton button = new JButton("×");
         button.setPreferredSize(new Dimension(20, 20));
         button.setBackground(new Color(48, 6, 4));
@@ -343,64 +393,10 @@ public class UpdateVehicle {
             this.panelInScrollPaneUpdateSV.add(panelUpdateServiceVisit);
             this.panelInScrollPaneUpdateSV.revalidate();
             this.panelInScrollPaneUpdateSV.repaint();
-            this.contentPane.revalidate();
-            this.contentPane.repaint();
 
             ServiceVisit serviceVisit = foundVehicle.getServiceVisits()[i];
-            int date = serviceVisit.getDate();
-            LocalDateTime dateTime = Instant.ofEpochSecond(date).atZone(ZoneId.systemDefault()).toLocalDateTime();
 
-            panelUpdateServiceVisits.getTextFieldUpdateDay().setText(String.valueOf(dateTime.getDayOfMonth()));
-            panelUpdateServiceVisits.getTextFieldUpdateMonth().setText(String.valueOf(dateTime.getMonthValue()));
-            panelUpdateServiceVisits.getTextFieldUpdateYear().setText(String.valueOf(dateTime.getYear()));
-            panelUpdateServiceVisits.getTextFieldUpdateHour().setText(String.valueOf(dateTime.getHour()));
-            panelUpdateServiceVisits.getTextFieldUpdateMinute().setText(String.valueOf(dateTime.getMinute()));
-            panelUpdateServiceVisits.getTextFieldUpdateSecond().setText(String.valueOf(dateTime.getSecond()));
-
-            panelUpdateServiceVisits.getTextFieldUpdatePrice().setText(String.valueOf(serviceVisit.getPrice()));
-
-            int updateServiceDescsCount = serviceVisit.getServiceDescriptionsCount();
-
-            for (int j = 0; j < updateServiceDescsCount; j++) {
-                JPanel newRow = new JPanel(new GridBagLayout());
-                GridBagConstraints gbc = new GridBagConstraints();
-
-                JLabel label = new JLabel("Description " + (j + 1));
-                JTextField textField = new JTextField(10);
-                textField.setText(serviceVisit.getServiceDescriptions()[j]);
-                JButton button = removeItemButton(panelUpdateServiceVisits.getPanelServiceDescs(),
-                        panelUpdateServiceVisits.getServiceDescsTextFields(),
-                        panelUpdateServiceVisits.getServiceDescsLabels(),
-                        label, textField, newRow);
-
-                gbc.gridx = 0;
-                gbc.gridy = 0;
-                gbc.gridwidth = 1;
-                gbc.insets = new Insets(5, 5, 5, 5);
-                newRow.add(label, gbc);
-
-                gbc.gridx = 2;
-                gbc.gridy = 0;
-                gbc.gridwidth = 1;
-                gbc.insets = new Insets(5, 0, 5, 5);
-                gbc.fill = GridBagConstraints.NONE;
-                newRow.add(button, gbc);
-
-                gbc.gridx = 1;
-                gbc.gridy = 0;
-                gbc.gridwidth = 1;
-                gbc.insets = new Insets(5, 5, 5, 5);
-                gbc.fill = GridBagConstraints.HORIZONTAL;
-                gbc.weightx = 1.0;
-                newRow.add(textField, gbc);
-
-                panelUpdateServiceVisits.getPanelServiceDescs().add(newRow);
-                panelUpdateServiceVisits.getPanelServiceDescs().revalidate();
-                panelUpdateServiceVisits.getPanelServiceDescs().repaint();
-
-                panelUpdateServiceVisits.getServiceDescsTextFields().add(textField);
-                panelUpdateServiceVisits.getServiceDescsLabels().add(label);
-            }
+            panelUpdateServiceVisits.updateServiceVisit(serviceVisit);
 
             this.panelsUpdateServiceVisits.add(panelUpdateServiceVisits);
         }
@@ -419,68 +415,65 @@ public class UpdateVehicle {
 
                     JLabel label = new JLabel("Description " + (serviceDescsTextFields.size() + 1));
                     JTextField textField = new JTextField(10);
-                    JButton button = removeItemButton(serviceDescsPanel,
-                            serviceDescsTextFields,
-                            serviceDescsLabels,
-                            label, textField, newRow);
-
-                    gbc.gridx = 0;
-                    gbc.gridy = 0;
-                    gbc.gridwidth = 1;
-                    gbc.insets = new Insets(5, 5, 5, 5);
-                    newRow.add(label, gbc);
-
-                    gbc.gridx = 2;
-                    gbc.gridy = 0;
-                    gbc.gridwidth = 1;
-                    gbc.insets = new Insets(5, 0, 5, 5);
-                    gbc.fill = GridBagConstraints.NONE;
-                    newRow.add(button, gbc);
-
-                    gbc.gridx = 1;
-                    gbc.gridy = 0;
-                    gbc.gridwidth = 1;
-                    gbc.insets = new Insets(5, 5, 5, 5);
-                    gbc.fill = GridBagConstraints.HORIZONTAL;
-                    gbc.weightx = 1.0;
-                    newRow.add(textField, gbc);
-
-                    serviceDescsPanel.add(newRow);
-                    serviceDescsPanel.revalidate();
-                    serviceDescsPanel.repaint();
-
-                    serviceDescsTextFields.add(textField);
-                    serviceDescsLabels.add(label);
+                    addNewRowServiceDescs(newRow, gbc, label, textField, serviceDescsPanel, serviceDescsTextFields, serviceDescsLabels);
                 }
             });
         }
     }
 
-    private void addServiceVisitCleanup() {
-        textFieldAddYear.setText("");
-        textFieldAddMonth.setText("");
-        textFieldAddDay.setText("");
-        textFieldAddHour.setText("");
-        textFieldAddMinute.setText("");
-        textFieldAddSecond.setText("");
-        textFieldAddPrice.setText("");
+    public static void initItemsToAddNewRow(JPanel newRow, GridBagConstraints gbc, JLabel label, JTextField textField, JButton button) {
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.insets = new Insets(5, 5, 5, 5);
+        newRow.add(label, gbc);
 
-        this.panelServiceDescs.removeAll();
-        this.panelServiceDescs.revalidate();
-        this.panelServiceDescs.repaint();
+        gbc.gridx = 2;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.insets = new Insets(5, 0, 5, 5);
+        gbc.fill = GridBagConstraints.NONE;
+        newRow.add(button, gbc);
 
-        this.serviceDescsTextFields = new ArrayList<>();
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
+        newRow.add(textField, gbc);
     }
 
-    private int addServiceVisitHelper() {
+    public static void addNewRowServiceDescs(JPanel newRow, GridBagConstraints gbc, JLabel label, JTextField textField, JPanel panelServiceDescs, ArrayList<JTextField> serviceDescsTextFields, ArrayList<JLabel> serviceDescsLabels) {
+        JButton button = removeItemButton(panelServiceDescs,
+                serviceDescsTextFields,
+                serviceDescsLabels,
+                label, textField, newRow);
+
+        initItemsToAddNewRow(newRow, gbc, label, textField, button);
+
+        panelServiceDescs.add(newRow);
+        panelServiceDescs.revalidate();
+        panelServiceDescs.repaint();
+
+        serviceDescsTextFields.add(textField);
+        serviceDescsLabels.add(label);
+    }
+
+    private int parseDateTime() {
+        LocalDateTime dateTime = parseDateTime(textFieldAddYear, textFieldAddMonth, textFieldAddDay, textFieldAddHour, textFieldAddMinute, textFieldAddSecond);
+        return (int) dateTime.toEpochSecond(ZoneOffset.UTC);
+    }
+
+    public static LocalDateTime parseDateTime(JTextField textFieldAddYear, JTextField textFieldAddMonth, JTextField textFieldAddDay, JTextField textFieldAddHour, JTextField textFieldAddMinute, JTextField textFieldAddSecond) {
         int year = Integer.parseInt(textFieldAddYear.getText());
         int month = Integer.parseInt(textFieldAddMonth.getText());
         int day = Integer.parseInt(textFieldAddDay.getText());
         int hour = Integer.parseInt(textFieldAddHour.getText());
         int minute = Integer.parseInt(textFieldAddMinute.getText());
         int second = Integer.parseInt(textFieldAddSecond.getText());
-        LocalDateTime dateTime = LocalDateTime.of(year, month, day, hour, minute, second);
-        return (int) dateTime.toEpochSecond(ZoneOffset.UTC);
+
+        return LocalDateTime.of(year, month, day, hour, minute, second);
     }
 
     private void initTextBorders() {
@@ -507,5 +500,21 @@ public class UpdateVehicle {
         TitledBorder titledBorderDelete = BorderFactory.createTitledBorder("Find vehicle to delete a service visit from");
         titledBorderDelete.setTitleFont(titledBorderDelete.getTitleFont().deriveFont(Font.BOLD));
         this.panelFindVehicleToDeleteSV.setBorder(titledBorderDelete);
+    }
+
+    private void addServiceVisitCleanup() {
+        textFieldAddYear.setText("");
+        textFieldAddMonth.setText("");
+        textFieldAddDay.setText("");
+        textFieldAddHour.setText("");
+        textFieldAddMinute.setText("");
+        textFieldAddSecond.setText("");
+        textFieldAddPrice.setText("");
+
+        this.panelServiceDescs.removeAll();
+        this.panelServiceDescs.revalidate();
+        this.panelServiceDescs.repaint();
+
+        this.serviceDescsTextFields = new ArrayList<>();
     }
 }

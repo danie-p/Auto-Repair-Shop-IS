@@ -5,17 +5,24 @@ import FileDataStructure.Block;
 import HeapFile.HeapFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 public class Model {
     private final HeapFile<Vehicle> heapFileVehicles;
     private final ExtendibleHashFile<VehicleByCustomerID> extHashFileByID;
     private final ExtendibleHashFile<VehicleByLicensePlate> extHashFileByLP;
+    private final String controlHeapFileName;
+    private final String controlHashFileByIDName;
+    private final String controlHashFileByLPName;
 
-    public Model(int clusterSize, String heapFileName, String extHashFileByIDName, String extHashFileByLPName) {
+    public Model(int clusterSize,
+                 String heapFileName, String extHashFileByIDName, String extHashFileByLPName,
+                 String controlHeapFileName, String controlHashFileByIDName, String controlHashFileByLPName) {
         this.heapFileVehicles = new HeapFile<Vehicle>(heapFileName, clusterSize, new Vehicle("", "", -1, "", null));
         this.extHashFileByID = new ExtendibleHashFile<VehicleByCustomerID>(extHashFileByIDName, clusterSize, new VehicleByCustomerID(-1, -1));
         this.extHashFileByLP = new ExtendibleHashFile<VehicleByLicensePlate>(extHashFileByLPName, clusterSize, new VehicleByLicensePlate(-1, ""));
+        this.controlHeapFileName = controlHeapFileName;
+        this.controlHashFileByIDName = controlHashFileByIDName;
+        this.controlHashFileByLPName = controlHashFileByLPName;
     }
 
     public void clearData() throws IOException {
@@ -126,13 +133,12 @@ public class Model {
 
     // 4. Zmena – umožní zmeniť akékoľvek evidované údaje (vozidlo sa vyhľadá podľa id zákazníka
     // alebo podľa EČV – vyberie si užívateľ), pozor na zmenu kľúčových a nekľúčových atribútov
-
     /**
      * @param oldVehicle dočasný záznam vozidla s nastaveným kľúčom customerID
      * @param newVehicle záznam vozidla s úplne nastavenými hodnotami, ktoré sa majú aktualizovať
      * @return pôvodný záznam, ktorý bol editovaný
      */
-    public Vehicle updateVehicleByID(Vehicle oldVehicle, Vehicle newVehicle) throws IOException {
+    public Vehicle updateVehicle(Vehicle oldVehicle, Vehicle newVehicle) throws IOException {
         VehicleByCustomerID tempHashRecord = new VehicleByCustomerID(-1, oldVehicle.getCustomerID());
         VehicleByCustomerID foundHashRecord = this.extHashFileByID.get(tempHashRecord);
 
@@ -145,14 +151,32 @@ public class Model {
         return null;
     }
 
-    public Vehicle updateVehicleByLP(Vehicle oldVehicle, Vehicle newVehicle) throws IOException {
-        VehicleByLicensePlate tempHashRecord = new VehicleByLicensePlate(-1, oldVehicle.getLicensePlateCode());
-        VehicleByLicensePlate foundHashRecord = this.extHashFileByLP.get(tempHashRecord);
+    // 5. Zmazanie návštevy servisu – umožní zmazať akékoľvek evidované údaje (vozidlo sa vyhľadá
+    // podľa id zákazníka alebo podľa EČV – vyberie si užívateľ)
+    public Vehicle removeServiceVisitFromVehicle(Vehicle vehicle, int serviceVisitIndex) throws IOException {
+        VehicleByCustomerID tempHashRecord = new VehicleByCustomerID(-1, vehicle.getCustomerID());
+        VehicleByCustomerID foundHashRecord = this.extHashFileByID.get(tempHashRecord);
 
         if (foundHashRecord != null) {
             int heapBlockAddress = foundHashRecord.getBlockAddress();
 
-            return this.heapFileVehicles.update(heapBlockAddress, oldVehicle, newVehicle);
+            Block<Vehicle> blockWithVehicleToUpdate = this.heapFileVehicles.readBlockWithRecord(heapBlockAddress, vehicle);
+
+            if (blockWithVehicleToUpdate == null)
+                return null;
+
+            Vehicle vehicleToUpdate = blockWithVehicleToUpdate.getRecord(vehicle);
+
+            if (vehicleToUpdate == null)
+                return null;
+
+            vehicleToUpdate.removeServiceVisit(serviceVisitIndex);
+
+            // navstevu servisu sa podarilo odstranit
+            // aktualizuj obsah bloku v heap file
+            this.heapFileVehicles.writeBlockIntoFile(heapBlockAddress, blockWithVehicleToUpdate);
+
+            return vehicleToUpdate;
         }
 
         return null;
@@ -168,5 +192,11 @@ public class Model {
 
     public String readExtHashFileByLPSequentially() throws IOException {
         return this.extHashFileByLP.readSequentially();
+    }
+
+    public void close() {
+        this.heapFileVehicles.close(this.controlHeapFileName);
+        this.extHashFileByID.close(this.controlHashFileByIDName);
+        this.extHashFileByLP.close(this.controlHashFileByLPName);
     }
 }

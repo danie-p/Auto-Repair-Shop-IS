@@ -99,8 +99,8 @@
           <scrollpane id="aa3a3" binding="scrollPaneServiceDesc">
             <constraints>
               <grid row="1" column="3" row-span="4" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
-                <minimum-size width="300" height="280"/>
-                <preferred-size width="300" height="280"/>
+                <minimum-size width="300" height="200"/>
+                <preferred-size width="300" height="200"/>
               </grid>
             </constraints>
             <properties>
