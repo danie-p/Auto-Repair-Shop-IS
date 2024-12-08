@@ -34,7 +34,7 @@ public class BitSetUtility {
         int totalBits = Constants.integerBits;
         BitSet bitSet = new BitSet(totalBits);
 
-        // TODO: upravit pre variabilne dlzky strToConvert
+        // variabilne dlzky strToConvert
 
         // vezmi posledne 4 znaky zo stringu
         strToConvert = strToConvert.substring(strToConvert.length() - 4);

@@ -175,7 +175,10 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
                     this.blocksCount++;
                 }
 
-                this.directory.set(directoryIndex, new DirectoryItem(blockAddress, localDepth, validCount));
+                int numOfSameDirectoryItems = 1 << (this.fileDepth - localDepth);
+                for (int i = 0; i < numOfSameDirectoryItems; i++) {
+                    this.directory.set(directoryIndex + i, new DirectoryItem(blockAddress, localDepth, validCount));
+                }
             }
 
             int numOfSameDirectoryItems = 1 << (this.fileDepth - localDepth);
@@ -230,9 +233,6 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
             doubledDirectory.add(new DirectoryItem(directoryItem.getBlockAddress(), directoryItem.getLocalDepth(), directoryItem.getValidCount()));
         }
         this.directory = doubledDirectory;
-
-        // aktualizuj adresy v adresari
-
     }
 
     private void splitBlock(Block<T> oldBlock, int oldBlockAddress, int oldBlockLocalDepth, int directoryIndex) throws IOException {
@@ -246,6 +246,7 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
         // rozdel stare zaznamy podla vybranych bitov z hesovania medzi stary a novy blok
         for (T record : records) {
             int updatedDirectoryIndex = this.getDirectoryIndex(record);
+            updatedDirectoryIndex = this.maskDirectoryIndexByLocalDepth(record, oldBlockLocalDepth);
             if (updatedDirectoryIndex == directoryIndex) {
                 oldBlock.insertRecord(record);
             } else {
@@ -263,7 +264,7 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
             for (int i = 0; i < numOfSameDirectoryItems; i++) {
                 DirectoryItem item = this.directory.get(directoryIndex + i);
                 item.setBlockAddress(-1);
-                item.setValidCount(-1);
+                item.setValidCount(0);
             }
         } else {
             // ak je stary blok neprazdny, aktualizuj ho
@@ -279,16 +280,7 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
         if (!newBlock.isFullyEmpty()) {
             int newBlockAddress;
 
-            if (this.fullyEmpty != -1) {
-                // ak je v subore nejaky prazdny blok, zapis novy blok na jeho miesto
-                newBlockAddress = this.fullyEmpty;
-                Block<T> firstFullyEmptyBlock = this.readBlockFromFile(this.fullyEmpty);
-                this.removeFirstFullyEmptyBlockFromChain(firstFullyEmptyBlock);
-            } else {
-                // inak zapis novy blok na koniec suboru
-                newBlockAddress = this.blocksCount;
-                this.blocksCount++;
-            }
+            newBlockAddress = this.getNewBlockAddress();
 
             // novy blok sa zapise do suboru, len ak nie je prazdny
             this.writeBlockIntoFile(newBlockAddress, newBlock);
@@ -302,9 +294,24 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
             for (int i = 0; i < numOfSameDirectoryItems; i++) {
                 DirectoryItem item = this.directory.get(newDirectoryIndex + i);
                 item.setBlockAddress(-1);
-                item.setValidCount(-1);
+                item.setValidCount(0);
             }
         }
+    }
+
+    private int getNewBlockAddress() throws IOException {
+        int newBlockAddress;
+        if (this.fullyEmpty != -1) {
+            // ak je v subore nejaky prazdny blok, zapis novy blok na jeho miesto
+            newBlockAddress = this.fullyEmpty;
+            Block<T> firstFullyEmptyBlock = this.readBlockFromFile(this.fullyEmpty);
+            this.removeFirstFullyEmptyBlockFromChain(firstFullyEmptyBlock);
+        } else {
+            // inak zapis novy blok na koniec suboru
+            newBlockAddress = this.blocksCount;
+            this.blocksCount++;
+        }
+        return newBlockAddress;
     }
 
     /**
@@ -332,6 +339,8 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
         int blockAddress = this.directory.get(directoryIndex).getBlockAddress();
         int localDepth = this.directory.get(directoryIndex).getLocalDepth();
 
+        directoryIndex = this.maskDirectoryIndexByLocalDepth(recordWithKey, localDepth);
+
         Block<T> blockFoundByKey = this.readBlockFromFile(blockAddress);
 
         if (blockFoundByKey == null)
@@ -340,76 +349,164 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
         int blockingFactor = blockFoundByKey.getBlockingFactor();
 
         // najdi blok a vymaz z neho zaznam
-        blockFoundByKey.deleteRecord(recordWithKey);
-        this.directory.get(directoryIndex).setValidCount(blockFoundByKey.getValidCount());
+        T deletedRecord = blockFoundByKey.deleteRecord(recordWithKey);
+
+        int numOfSameDirectoryItems = 1 << (this.fileDepth - localDepth);
+        for (int i = 0; i < numOfSameDirectoryItems; i++) {
+            this.directory.get(directoryIndex + i).setValidCount(blockFoundByKey.getValidCount());
+        }
+
         int validCount = blockFoundByKey.getValidCount();
 
-        // TODO cyklicky
-        // TODO blok s hlbkou 1 NEzlucujem so susedom (vzdy mi ostanu aspon 2 polozky v adresari)
+        boolean canMergeBlocks = true;
+        while (canMergeBlocks) {
+            int directoryIndexNeighbour = this.getDirectoryIndexNeighbour(recordWithKey, localDepth);
 
-        int directoryIndexNeighbour = this.getDirectoryIndexNeighbour(recordWithKey, localDepth);
+            int localDepthNeighbour = this.directory.get(directoryIndexNeighbour).getLocalDepth();
+            if (localDepth != localDepthNeighbour || localDepth == 1) {
+                // ak sused nema rovnaku localDepth, nie je to sused ... blok nema suseda
+                // alebo ak ma blok hlbku 1, nezluc ho so susedom (vzdy ostanu aspon 2 polozky v adresari)
 
-        int localDepthNeighbour = this.directory.get(directoryIndexNeighbour).getLocalDepth();
-        if (localDepth != localDepthNeighbour) {
-            // ak sused nema rovnaku localDepth, nie je to sused
-            // TODO blok bez suseda po vymazani zaznamu ostane prazdny => sprava prazdneho bloku
-            // bez reorganizacie
-            this.writeBlockIntoFile(blockAddress, blockFoundByKey);
-        } else {
-            // nasiel sa sused, skontroluj jeho pocet zaznamov
-            int validCountNeighbour = this.directory.get(directoryIndexNeighbour).getValidCount();
+                if (blockFoundByKey.isFullyEmpty()) {
+                    // blok bez suseda po vymazani zaznamu ostane prazdny => sprava prazdneho bloku
+                    this.manageFullyEmptyBlock(blockAddress, blockFoundByKey);
 
-            if (validCount + validCountNeighbour <= blockingFactor) {
-                // ak po zruseni zostane v susednych blokoch iba tolko zaznamov, ze sa zmestia do jedineho bloku
-                // zniz jeho localDepth
-                localDepth--;
-                // TODO uz ziadny blok nema localDepth == this.fileDepth => zniz hlbku suboru, zmensi adresar
-
-                int directoryIndexMoveTo = this.maskDirectoryIndexByLocalDepth(recordWithKey, localDepth);
-                int blockAddressMoveTo = this.directory.get(directoryIndexMoveTo).getBlockAddress();
-                int blockAddressNeighbour = this.directory.get(directoryIndexNeighbour).getBlockAddress();
-
-                // presun zaznamy do jedineho bloku
-                Block<T> moveToBlock = this.readBlockFromFile(blockAddressMoveTo);
-
-                int moveFromBlockAddress;
-                if (directoryIndexMoveTo == directoryIndex) {
-                    moveFromBlockAddress = blockAddressNeighbour;
+                    // zneplatni odkazy na prazdny blok
+                    numOfSameDirectoryItems = 1 << (this.fileDepth - localDepth);
+                    for (int i = 0; i < numOfSameDirectoryItems; i++) {
+                        DirectoryItem item = this.directory.get(directoryIndex + i);
+                        item.setBlockAddress(-1);
+                        item.setValidCount(0);
+                    }
                 } else {
-                    moveFromBlockAddress = blockAddress;
+                    // bez reorganizacie, aktualizuj obsah bloku
+                    this.writeBlockIntoFile(blockAddress, blockFoundByKey);
                 }
-
-                Block<T> moveFromBlock = this.readBlockFromFile(moveFromBlockAddress);
-                ArrayList<T> recordsToMove = moveFromBlock.getValidRecords();
-                // zrus platnost vsetkych starych zaznamov
-                moveFromBlock.setValidCount(0);
-
-                // presun zaznamy
-                for (T record : recordsToMove) {
-                    moveToBlock.insertRecord(record);
-                }
-
-                // zapis zmeny
-                this.writeBlockIntoFile(blockAddressMoveTo, moveToBlock);
-
-                // uvolni prazdny blok
-                this.manageFullyEmptyBlock(moveFromBlockAddress , moveFromBlock);
-
-                int numOfSameDirectoryItems = 1 << (this.fileDepth - localDepth);
-                for (int i = 0; i < numOfSameDirectoryItems; i++) {
-                    DirectoryItem item = this.directory.get(directoryIndexMoveTo + i);
-                    item.setBlockAddress(blockAddressMoveTo);
-                    item.setLocalDepth(localDepth);
-                    item.setValidCount(moveToBlock.getValidCount());
-                }
+                canMergeBlocks = false;
             } else {
-                // po zruseni zostane spolu so susedom viac zaznamov ako je blokovaci faktor
-                // bez reorganizacie
-                this.writeBlockIntoFile(blockAddress, blockFoundByKey);
+                // nasiel sa sused, skontroluj jeho pocet zaznamov
+                int validCountNeighbour = this.directory.get(directoryIndexNeighbour).getValidCount();
+
+                if (validCount + validCountNeighbour <= blockingFactor) {
+                    // ak po zruseni zostane v susednych blokoch iba tolko zaznamov, ze sa zmestia do jedineho bloku
+                    // presun zaznamy do jedineho bloku a bloky "spoj"
+                    this.mergeBlocks(recordWithKey, blockFoundByKey, blockAddress, localDepth, directoryIndex, directoryIndexNeighbour);
+
+                    boolean noMoreBlocksWithFileDepth = this.areNoMoreBlocksWithFileDepth();
+
+                    // skontroluj, ci sa znizila hlbka celeho suboru a adresar sa moze zmensit
+                    if (noMoreBlocksWithFileDepth) {
+                        // ak uz ziadny blok nema localDepth == this.fileDepth
+                        // zniz hlbku suboru, zmensi adresar
+                        this.halveDirectory();
+
+                        // ak bol zmenseny adresar, opakovane skontroluj, ci nie je mozne spojit bloky
+                        directoryIndex = this.getDirectoryIndex(recordWithKey);
+                        blockAddress = this.directory.get(directoryIndex).getBlockAddress();
+                        localDepth = this.directory.get(directoryIndex).getLocalDepth();
+                        directoryIndex = this.maskDirectoryIndexByLocalDepth(recordWithKey, localDepth);
+                        blockFoundByKey = this.readBlockFromFile(blockAddress);
+                        if (blockFoundByKey == null)
+                            return null;
+                        validCount = blockFoundByKey.getValidCount();
+                    } else {
+                        canMergeBlocks = false;
+                    }
+
+                } else {
+                    // po zruseni zostane spolu so susedom viac zaznamov ako je blokovaci faktor
+                    // bez reorganizacie
+                    this.writeBlockIntoFile(blockAddress, blockFoundByKey);
+                    canMergeBlocks = false;
+                }
             }
         }
 
-        return null;
+        return deletedRecord;
+    }
+
+    private void mergeBlocks(T recordWithKey, Block<T> blockFoundByKey, int blockAddress, int localDepth, int directoryIndex, int directoryIndexNeighbour) throws IOException {
+        // zniz localDepth
+        localDepth--;
+
+        int directoryIndexMoveTo = this.maskDirectoryIndexByLocalDepth(recordWithKey, localDepth);
+        int blockAddressMoveTo = this.directory.get(directoryIndexMoveTo).getBlockAddress();
+        int blockAddressNeighbour = this.directory.get(directoryIndexNeighbour).getBlockAddress();
+
+        // presun zaznamy do jedineho bloku
+        int blockAddressMoveFrom;
+        Block<T> moveFromBlock;
+        Block<T> moveToBlock;
+        if (directoryIndexMoveTo == directoryIndex) {
+            blockAddressMoveFrom = blockAddressNeighbour;
+            moveFromBlock = this.readBlockFromFile(blockAddressNeighbour);
+            moveToBlock = blockFoundByKey;
+        } else {
+            blockAddressMoveFrom = blockAddress;
+            moveFromBlock = blockFoundByKey;
+            moveToBlock = this.readBlockFromFile(blockAddressMoveTo);
+        }
+
+        if (moveFromBlock == null) {
+            moveFromBlock = new Block<T>(this.clusterSize, this.exampleRecord);
+        }
+        if (moveToBlock == null) {
+            moveToBlock = new Block<T>(this.clusterSize, this.exampleRecord);
+        }
+
+        ArrayList<T> recordsToMove = moveFromBlock.getValidRecords();
+        // zrus platnost vsetkych starych zaznamov
+        moveFromBlock.setValidCount(0);
+
+        // presun zaznamy
+        for (T record : recordsToMove) {
+            moveToBlock.insertRecord(record);
+        }
+
+        if (blockAddressMoveTo == -1) {
+            blockAddressMoveTo = getNewBlockAddress();
+        }
+        // zapis zmeny
+        this.writeBlockIntoFile(blockAddressMoveTo, moveToBlock);
+
+        if (blockAddressMoveFrom != -1) {
+            // uvolni prazdny blok
+            this.manageFullyEmptyBlock(blockAddressMoveFrom, moveFromBlock);
+        }   // inak prazdny blok moveFrom nie je zapisany v subore, ale je vytvoreny len v operacnej pamati a netreba ho menezovat
+
+        int numOfSameDirectoryItems = 1 << (this.fileDepth - localDepth);
+        for (int i = 0; i < numOfSameDirectoryItems; i++) {
+            DirectoryItem item = this.directory.get(directoryIndexMoveTo + i);
+            item.setBlockAddress(blockAddressMoveTo);
+            item.setLocalDepth(localDepth);
+            item.setValidCount(moveToBlock.getValidCount());
+        }
+    }
+
+    private boolean areNoMoreBlocksWithFileDepth() {
+        boolean noMoreBlocksWithFileDepth = true;
+        for (DirectoryItem item : this.directory) {
+            if (item.getLocalDepth() == this.fileDepth) {
+                noMoreBlocksWithFileDepth = false;
+                break;
+            }
+        }
+        return noMoreBlocksWithFileDepth;
+    }
+
+    private void halveDirectory() {
+        // zmensi adresovy priestor (D = D - 1)
+        this.fileDepth--;
+
+        // zmensi adresar na polovicu
+        ArrayList<DirectoryItem> halvedDirectory = new ArrayList<>(this.directory.size() / 2);
+
+        // prekopiruj iba kazdu druhu polozku v adresari
+        for (int i = 0; i < this.directory.size(); i += 2) {
+            halvedDirectory.add(this.directory.get(i));
+        }
+
+        this.directory = halvedDirectory;
     }
 
     @Override
@@ -430,9 +527,15 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
 
     @Override
     public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (DirectoryItem item : this.directory) {
+            sb.append("\n\t").append(item);
+        }
+
         return "ExtendibleHashFile{" +
                 "fileDepth=" + fileDepth +
-                ", fullyEmpty=" + fullyEmpty +
+                ",\ndirectory=" + sb +
+                ",\nfullyEmpty=" + fullyEmpty +
                 ", blocksCount=" + blocksCount +
                 '}';
     }

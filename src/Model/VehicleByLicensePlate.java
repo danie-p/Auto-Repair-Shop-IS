@@ -12,28 +12,30 @@ public class VehicleByLicensePlate implements IHashData<VehicleByLicensePlate> {
     // adresa bloku, v ktorom je dane vozidlo ulozene v heap file
     private int blockAddress;
     // klucovy atribut
-    private String licensePlateCode;
+    private String keyLicensePlateCode;
     private byte licensePlateCodeLength;
+    private int customerID;
 
-    public VehicleByLicensePlate(int blockAddress, String licensePlateCode) {
+    public VehicleByLicensePlate(int blockAddress, String keyLicensePlateCode, int customerID) {
         this.blockAddress = blockAddress;
-        this.licensePlateCode = StringProcessor.initStringAttribute(licensePlateCode, Constants.maxLicensePlateCodeLength);
-        this.licensePlateCodeLength = (byte) this.licensePlateCode.length();
+        this.keyLicensePlateCode = StringProcessor.initStringAttribute(keyLicensePlateCode, Constants.maxLicensePlateCodeLength);
+        this.licensePlateCodeLength = (byte) this.keyLicensePlateCode.length();
+        this.customerID = customerID;
     }
 
     @Override
     public BitSet getHash() {
-        return BitSetUtility.strToBitSet(this.licensePlateCode);
+        return BitSetUtility.strToBitSet(this.keyLicensePlateCode);
     }
 
     @Override
     public VehicleByLicensePlate createClass() {
-        return new VehicleByLicensePlate(-1, "");
+        return new VehicleByLicensePlate(-1, "", -1);
     }
 
     @Override
     public boolean isEqualTo(VehicleByLicensePlate other) {
-        return this.licensePlateCode.equals(other.licensePlateCode);
+        return this.keyLicensePlateCode.equals(other.keyLicensePlateCode);
     }
 
     @Override
@@ -48,9 +50,10 @@ public class VehicleByLicensePlate implements IHashData<VehicleByLicensePlate> {
 
         try {
             outStream.writeInt(this.blockAddress);
+            outStream.writeInt(this.customerID);
             outStream.writeByte(this.licensePlateCodeLength);
 
-            byte[] licensePlateCodeBytes = StringProcessor.stringAttributeToByteArray(this.licensePlateCode, Constants.maxLicensePlateCodeLength, this.licensePlateCodeLength);
+            byte[] licensePlateCodeBytes = StringProcessor.stringAttributeToByteArray(this.keyLicensePlateCode, Constants.maxLicensePlateCodeLength, this.licensePlateCodeLength);
             // zapis pole bajtov o fixnej dlzke (max dlzke ECV)
             outStream.write(licensePlateCodeBytes);
 
@@ -67,11 +70,12 @@ public class VehicleByLicensePlate implements IHashData<VehicleByLicensePlate> {
 
         try {
             this.blockAddress = inStream.readInt();
+            this.customerID = inStream.readInt();
             this.licensePlateCodeLength = inStream.readByte();
 
             byte[] licensePlateCodeBytes = new byte[Constants.maxLicensePlateCodeLength];
             inStream.readFully(licensePlateCodeBytes);
-            this.licensePlateCode = StringProcessor.byteArrayToStringAttribute(licensePlateCodeBytes, this.licensePlateCodeLength);
+            this.keyLicensePlateCode = StringProcessor.byteArrayToStringAttribute(licensePlateCodeBytes, this.licensePlateCodeLength);
         } catch (IOException e) {
             throw new IllegalStateException("Error during conversion from byte array!");
         }
@@ -81,7 +85,7 @@ public class VehicleByLicensePlate implements IHashData<VehicleByLicensePlate> {
     public String toString() {
         return "VehicleByLicensePlate{" +
                 "blockAddress=" + blockAddress +
-                ", licensePlateCode='" + licensePlateCode + '\'' +
+                ", licensePlateCode='" + keyLicensePlateCode + '\'' +
                 '}';
     }
 
@@ -89,15 +93,11 @@ public class VehicleByLicensePlate implements IHashData<VehicleByLicensePlate> {
         return blockAddress;
     }
 
-    public void setBlockAddress(int blockAddress) {
-        this.blockAddress = blockAddress;
+    public String getKeyLicensePlateCode() {
+        return keyLicensePlateCode;
     }
 
-    public String getLicensePlateCode() {
-        return licensePlateCode;
-    }
-
-    public void setLicensePlateCode(String licensePlateCode) {
-        this.licensePlateCode = licensePlateCode;
+    public int getCustomerID() {
+        return customerID;
     }
 }

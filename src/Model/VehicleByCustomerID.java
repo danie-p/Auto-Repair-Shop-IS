@@ -12,26 +12,30 @@ public class VehicleByCustomerID implements IHashData<VehicleByCustomerID> {
     // adresa bloku, v ktorom je dane vozidlo ulozene v heap file
     private int blockAddress;
     // klucovy atribut
-    private int customerID;
+    private int keyCustomerID;
+    private String licensePlateCode;
+    private byte licensePlateCodeLength;
 
-    public VehicleByCustomerID(int blockAddress, int customerID) {
+    public VehicleByCustomerID(int blockAddress, int keyCustomerID, String licensePlateCode) {
         this.blockAddress = blockAddress;
-        this.customerID = customerID;
+        this.keyCustomerID = keyCustomerID;
+        this.licensePlateCode = StringProcessor.initStringAttribute(licensePlateCode, Constants.maxLicensePlateCodeLength);
+        this.licensePlateCodeLength = (byte) this.licensePlateCode.length();
     }
 
     @Override
     public BitSet getHash() {
-        return BitSetUtility.intToBitSet(this.customerID);
+        return BitSetUtility.intToBitSet(this.keyCustomerID);
     }
 
     @Override
     public VehicleByCustomerID createClass() {
-        return new VehicleByCustomerID(-1, -1);
+        return new VehicleByCustomerID(-1, -1, "");
     }
 
     @Override
     public boolean isEqualTo(VehicleByCustomerID other) {
-        return this.customerID == other.customerID;
+        return this.keyCustomerID == other.keyCustomerID;
     }
 
     @Override
@@ -46,7 +50,12 @@ public class VehicleByCustomerID implements IHashData<VehicleByCustomerID> {
 
         try {
             outStream.writeInt(this.blockAddress);
-            outStream.writeInt(this.customerID);
+            outStream.writeInt(this.keyCustomerID);
+            outStream.writeByte(this.licensePlateCodeLength);
+
+            byte[] licensePlateCodeBytes = StringProcessor.stringAttributeToByteArray(this.licensePlateCode, Constants.maxLicensePlateCodeLength, this.licensePlateCodeLength);
+            // zapis pole bajtov o fixnej dlzke (max dlzke ECV)
+            outStream.write(licensePlateCodeBytes);
 
             return byteArrayOutputStream.toByteArray();
         } catch (IOException e) {
@@ -61,7 +70,13 @@ public class VehicleByCustomerID implements IHashData<VehicleByCustomerID> {
 
         try {
             this.blockAddress = inStream.readInt();
-            this.customerID = inStream.readInt();
+            this.keyCustomerID = inStream.readInt();
+
+            this.licensePlateCodeLength = inStream.readByte();
+
+            byte[] licensePlateCodeBytes = new byte[Constants.maxLicensePlateCodeLength];
+            inStream.readFully(licensePlateCodeBytes);
+            this.licensePlateCode = StringProcessor.byteArrayToStringAttribute(licensePlateCodeBytes, this.licensePlateCodeLength);
         } catch (IOException e) {
             throw new IllegalStateException("Error during conversion from byte array!");
         }
@@ -71,7 +86,7 @@ public class VehicleByCustomerID implements IHashData<VehicleByCustomerID> {
     public String toString() {
         return "VehicleByCustomerID{" +
                 "blockAddress=" + blockAddress +
-                ", customerID=" + customerID +
+                ", customerID=" + keyCustomerID +
                 '}';
     }
 
@@ -79,15 +94,11 @@ public class VehicleByCustomerID implements IHashData<VehicleByCustomerID> {
         return blockAddress;
     }
 
-    public void setBlockAddress(int blockAddress) {
-        this.blockAddress = blockAddress;
+    public int getKeyCustomerID() {
+        return keyCustomerID;
     }
 
-    public int getCustomerID() {
-        return customerID;
-    }
-
-    public void setCustomerID(int customerID) {
-        this.customerID = customerID;
+    public String getLicensePlateCode() {
+        return licensePlateCode;
     }
 }

@@ -46,6 +46,9 @@ public class MainOperations {
     private JLabel labelDeleteByLP;
     private JButton buttonDeleteByID;
     private JButton buttonDeleteByLP;
+    private JButton buttonShowHeapFileControl;
+    private JButton buttonShowHashFileByIDControl;
+    private JButton buttonShowHashFileByLPControl;
     private Controller controller;
 
     public MainOperations(Controller controller) {
@@ -168,6 +171,51 @@ public class MainOperations {
                 textPane.setText("Input/Output operation was unsuccessful!" + ex);
             }
         });
+
+        this.buttonDeleteByID.addActionListener(e -> {
+            try {
+                int customerID = Integer.parseInt(textFieldDeleteByID.getText());
+
+                String s = this.controller.deleteVehicleByID(customerID);
+                textPane.setText(s);
+
+                textFieldDeleteByID.setText("");
+            } catch (NumberFormatException ex) {
+                textPane.setText("Please enter valid inputs!");
+            } catch (IOException ex) {
+                textPane.setText("Input/Output operation was unsuccessful!" + ex);
+            }
+        });
+
+        this.buttonDeleteByLP.addActionListener(e -> {
+            try {
+                String licensePlate = textFieldDeleteByLP.getText();
+
+                if (licensePlate == null)
+                    throw new IllegalArgumentException();
+
+                String s = this.controller.deleteVehicleByLP(licensePlate);
+                textPane.setText(s);
+
+                textFieldDeleteByLP.setText("");
+            } catch (IllegalArgumentException ex) {
+                textPane.setText("Please enter valid inputs!");
+            } catch (IOException ex) {
+                textPane.setText("Input/Output operation was unsuccessful!" + ex);
+            }
+        });
+
+        this.buttonShowHeapFileControl.addActionListener(e -> {
+            this.textPane.setText(this.controller.getHeapFileControlInfo());
+        });
+
+        this.buttonShowHashFileByIDControl.addActionListener(e -> {
+            this.textPane.setText(this.controller.getHashFileByIDControlInfo());
+        });
+
+        this.buttonShowHashFileByLPControl.addActionListener(e -> {
+            this.textPane.setText(this.controller.getHashFileByLPControlInfo());
+        });
     }
 
     private void initTextBorders() {
@@ -190,5 +238,9 @@ public class MainOperations {
 
     public JPanel getPanel() {
         return this.contentPane;
+    }
+
+    public void displayTextInfo(String text) {
+        this.textPane.setText(text);
     }
 }

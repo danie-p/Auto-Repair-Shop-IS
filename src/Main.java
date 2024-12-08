@@ -19,32 +19,32 @@ public class Main {
     public static void main(String[] args) throws IOException {
         int clusterSizeSmall = 4000;
         int clusterSize = 8000;
-        int operationsCount = 1000;
-        int initDataAmount = 100000;
+        int operationsCount = 10000;
+        int initDataAmount = 1000;
 
         Tester tester = new Tester();
 
         // EXT HASH FILE TESTS
-        tester.runSmallExtHashFileTestOnTowns(100);
-//        tester.runExtHashFileTestOnVehicles("test", clusterSize, operationsCount, initDataAmount);
+//        tester.runSmallExtHashFileTestOnTowns(100);
+//        tester.runExtHashFileTestOnVehicles("test", clusterSizeSmall, operationsCount, initDataAmount);
 
         // HEAP FILE TESTS
 //        tester.runSmallHeapFileTestOnVehicles(clusterSizeSmall);
-//        tester.runHeapFileTestOnVehicles("test", clusterSize, operationsCount, initDataAmount);
+//        tester.runHeapFileTestOnVehicles("test", clusterSizeSmall, operationsCount, initDataAmount);
 
-//        FlatDarkLaf.setup();
-//
-//        String[] fileNames = InitDialog.showInitDialog();
-//        if (fileNames == null) {
-//            System.exit(0);
-//        }
-//
-//        Controller controller = getController(fileNames, clusterSize);
-//
-//        SwingUtilities.invokeLater(() -> {
-//            AutoRepairShopGUI gui = new AutoRepairShopGUI(controller, fileNames[6]);
-//            gui.setVisible(true);
-//        });
+        FlatDarkLaf.setup();
+
+        String[] fileNames = InitDialog.showInitDialog();
+        if (fileNames == null) {
+            System.exit(0);
+        }
+
+        Controller controller = getController(fileNames, clusterSize);
+
+        SwingUtilities.invokeLater(() -> {
+            AutoRepairShopGUI gui = new AutoRepairShopGUI(controller, fileNames[6]);
+            gui.setVisible(true);
+        });
     }
 
     private static Controller getController(String[] fileNames, int clusterSize) {
@@ -54,13 +54,6 @@ public class Main {
         String controlHeapFileName = fileNames[3];
         String controlHashFileByIDName = fileNames[4];
         String controlHashFileByLPName = fileNames[5];
-
-//        String heapFileName = "heap";
-//        String hashFileByIDName = "hashID";
-//        String hashFileByLPName = "hashLP";
-//        String controlHeapFileName = "heap";
-//        String controlHashFileByIDName = "hashID";
-//        String controlHashFileByLPName = "hashLP";
 
         Model model = new Model(clusterSize,
                 heapFileName, hashFileByIDName, hashFileByLPName,

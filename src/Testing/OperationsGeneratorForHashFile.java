@@ -31,7 +31,7 @@ public class OperationsGeneratorForHashFile<T extends IHashData<T>> extends Oper
     }
 
     public boolean insertGetDelete() throws IOException {
-        return this.insertGetDelete(0.4, 0.6, 0.8);
+        return this.insertGetDelete(0.4, 0.2, 0.8);
     }
 
     public boolean insertGetDelete(double insertP, double getP, double existingP) throws IOException {
@@ -43,8 +43,7 @@ public class OperationsGeneratorForHashFile<T extends IHashData<T>> extends Oper
             } else if (randOperation < insertP + getP) {
                 if (!this.getTest(existingP)) return false;
             } else {
-                throw new RuntimeException("Not implemented yet!");
-                //if (!this.deleteTest(existingP)) return false;
+                if (!this.deleteTest(existingP)) return false;
             }
 
             HashSet<T> allDataInExtHashFile = extHashFile.getAllDataInFileDataStructure();

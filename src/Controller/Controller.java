@@ -15,7 +15,7 @@ import java.util.Scanner;
 public class Controller {
     private final Model model;
 
-    private static int customerIDCounter = 0; // TODO
+    private static int customerIDCounter = 0;
 
     public Controller(Model model) {
         this.model = model;
@@ -45,7 +45,7 @@ public class Controller {
         Vehicle foundVehicle = this.model.getVehicleByID(customerID);
 
         if (foundVehicle != null)
-            return "The following vehicle was found in the system by customer ID = [" + customerID + "] :\n" + foundVehicle.toStringAttributes();
+            return "The following vehicle was found in the system by Customer ID = [" + customerID + "] :\n" + foundVehicle.toStringAttributes();
 
         return "Vehicle search was unsuccessful!";
     }
@@ -54,7 +54,7 @@ public class Controller {
         Vehicle foundVehicle = this.model.getVehicleByLP(licensePlate);
 
         if (foundVehicle != null)
-            return "The following vehicle was found in the system by license plate code = [" + licensePlate + "] :\n" + foundVehicle.toStringAttributes();
+            return "The following vehicle was found in the system by License Plate Code = [" + licensePlate + "] :\n" + foundVehicle.toStringAttributes();
 
         return "Vehicle search was unsuccessful!";
     }
@@ -72,9 +72,27 @@ public class Controller {
             return "Vehicle insertion was unsuccessful! A vehicle with License Plate Code = [" + licensePlateCode + "] already exists!";
 
         this.model.insertVehicle(insertedVehicle);
-        this.customerIDCounter++;
+        customerIDCounter++;
 
         return "The following vehicle was inserted into the system:\n" + insertedVehicle.toStringAttributes();
+    }
+
+    public String deleteVehicleByID(int customerID) throws IOException {
+        Vehicle deletedVehicle = this.model.deleteVehicleByID(customerID);
+
+        if (deletedVehicle != null)
+            return "The following vehicle was deleted from the system by Customer ID = [" + customerID + "] :\n" + deletedVehicle.toStringAttributes();
+
+        return "Vehicle deletion was unsuccessful!";
+    }
+
+    public String deleteVehicleByLP(String licensePlate) throws IOException {
+        Vehicle deletedVehicle = this.model.deleteVehicleByLP(licensePlate);
+
+        if (deletedVehicle != null)
+            return "The following vehicle was deleted from the system by License Plate Code = [" + licensePlate + "] :\n" + deletedVehicle.toStringAttributes();
+
+        return "Vehicle deletion was unsuccessful!";
     }
 
     public String addServiceVisitByID(int customerID, int date, double price, String[] serviceDescs) throws IOException {
@@ -134,6 +152,18 @@ public class Controller {
     public String readExtHashFileByLPSequentially() throws IOException {
         return this.model.readExtHashFileByLPSequentially();
     }
+
+    public String getHeapFileControlInfo() {
+        return this.model.getHeapFileControlInfo();
+    }
+
+    public String getHashFileByIDControlInfo() {
+        return this.model.getHashFileByIDControlInfo();
+    }
+
+    public String getHashFileByLPControlInfo() {
+        return this.model.getHashFileByLPControlInfo();
+    }
     
     public void generateInputData(int numberOfVehicles) throws IOException {
         Random random = new Random();
@@ -141,8 +171,8 @@ public class Controller {
         for (int i = 0; i < numberOfVehicles; i++) {
             String customerName = StringGenerator.generateRandomString(3, Constants.maxCustomerNameLength + 1);
             String customerSurname = StringGenerator.generateRandomString(3, Constants.maxCustomerSurnameLength + 1);
-            int customerID = this.customerIDCounter;
-            this.customerIDCounter++;
+            int customerID = customerIDCounter;
+            customerIDCounter++;
             String licensePlateCode = StringGenerator.generateUniqueString(4);
 
             int serviceVisitsCount = random.nextInt(Constants.maxCustomerServiceVisitsCount + 1);

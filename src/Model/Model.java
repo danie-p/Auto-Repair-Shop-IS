@@ -18,8 +18,8 @@ public class Model {
                  String heapFileName, String extHashFileByIDName, String extHashFileByLPName,
                  String controlHeapFileName, String controlHashFileByIDName, String controlHashFileByLPName) {
         Vehicle exampleVehicle = new Vehicle("", "", -1, "", null);
-        VehicleByCustomerID exampleVehicleByID = new VehicleByCustomerID(-1, -1);
-        VehicleByLicensePlate exampleVehicleByLP = new VehicleByLicensePlate(-1, "");
+        VehicleByCustomerID exampleVehicleByID = new VehicleByCustomerID(-1, -1, "");
+        VehicleByLicensePlate exampleVehicleByLP = new VehicleByLicensePlate(-1, "", -1);
 
         this.controlHeapFileName = controlHeapFileName;
         this.controlHashFileByIDName = controlHashFileByIDName;
@@ -39,12 +39,12 @@ public class Model {
     // 1. Vyhľadanie všetkých evidovaných údajov o vozidle (vozidlo sa vyhľadá podľa id zákazníka
     // alebo podľa EČV – vyberie si užívateľ)
     public Vehicle getVehicleByID(int idToSearchBy) throws IOException {
-        VehicleByCustomerID tempHashRecord = new VehicleByCustomerID(-1, idToSearchBy);
+        VehicleByCustomerID tempHashRecord = new VehicleByCustomerID(-1, idToSearchBy, "");
         VehicleByCustomerID foundHashRecord = this.extHashFileByID.get(tempHashRecord);
 
         if (foundHashRecord != null) {
             int heapBlockAddress = foundHashRecord.getBlockAddress();
-            Vehicle tempHeapRecord = new Vehicle("", "", foundHashRecord.getCustomerID(), "", null);
+            Vehicle tempHeapRecord = new Vehicle("", "", foundHashRecord.getKeyCustomerID(), "", null);
 
             return this.heapFileVehicles.get(heapBlockAddress, tempHeapRecord);
         }
@@ -53,12 +53,12 @@ public class Model {
     }
 
     public Vehicle getVehicleByLP(String lpToSearchBy) throws IOException {
-        VehicleByLicensePlate tempHashRecord = new VehicleByLicensePlate(-1, lpToSearchBy);
+        VehicleByLicensePlate tempHashRecord = new VehicleByLicensePlate(-1, lpToSearchBy, -1);
         VehicleByLicensePlate foundHashRecord = this.extHashFileByLP.get(tempHashRecord);
 
         if (foundHashRecord != null) {
             int heapBlockAddress = foundHashRecord.getBlockAddress();
-            Vehicle tempHeapRecord = new Vehicle("", "", -1, foundHashRecord.getLicensePlateCode(), null);
+            Vehicle tempHeapRecord = new Vehicle("", "", -1, foundHashRecord.getKeyLicensePlateCode(), null);
 
             return this.heapFileVehicles.get(heapBlockAddress, tempHeapRecord);
         }
@@ -71,10 +71,10 @@ public class Model {
     public void insertVehicle(Vehicle vehicle) throws IOException {
         int heapBlockAddress = this.heapFileVehicles.insert(vehicle);
 
-        VehicleByCustomerID vehicleByCustomerID = new VehicleByCustomerID(heapBlockAddress, vehicle.getCustomerID());
+        VehicleByCustomerID vehicleByCustomerID = new VehicleByCustomerID(heapBlockAddress, vehicle.getCustomerID(), vehicle.getLicensePlateCode());
         this.extHashFileByID.insert(vehicleByCustomerID);
 
-        VehicleByLicensePlate vehicleByLicensePlate = new VehicleByLicensePlate(heapBlockAddress, vehicle.getLicensePlateCode());
+        VehicleByLicensePlate vehicleByLicensePlate = new VehicleByLicensePlate(heapBlockAddress, vehicle.getLicensePlateCode(), vehicle.getCustomerID());
         this.extHashFileByLP.insert(vehicleByLicensePlate);
     }
 
@@ -84,12 +84,12 @@ public class Model {
      * @return vozidlo, ku ktorému bola pridaná návšteva servisu; vracia null, ak sa pridanie nepodarilo
      */
     public Vehicle insertServiceVisitByID(ServiceVisit serviceVisit, int idToSearchBy) throws IOException {
-        VehicleByCustomerID tempHashRecord = new VehicleByCustomerID(-1, idToSearchBy);
+        VehicleByCustomerID tempHashRecord = new VehicleByCustomerID(-1, idToSearchBy, "");
         VehicleByCustomerID foundHashRecord = this.extHashFileByID.get(tempHashRecord);
 
         if (foundHashRecord != null) {
             int heapBlockAddress = foundHashRecord.getBlockAddress();
-            Vehicle tempHeapRecord = new Vehicle("", "", foundHashRecord.getCustomerID(), "", null);
+            Vehicle tempHeapRecord = new Vehicle("", "", foundHashRecord.getKeyCustomerID(), "", null);
 
             return this.insertServiceVisitHelper(serviceVisit, heapBlockAddress, tempHeapRecord);
         }
@@ -101,12 +101,12 @@ public class Model {
      * @return vozidlo, ku ktorému bola pridaná návšteva servisu; vracia null, ak sa pridanie nepodarilo
      */
     public Vehicle insertServiceVisitByLP(ServiceVisit serviceVisit, String lpToSearchBy) throws IOException {
-        VehicleByLicensePlate tempHashRecord = new VehicleByLicensePlate(-1, lpToSearchBy);
+        VehicleByLicensePlate tempHashRecord = new VehicleByLicensePlate(-1, lpToSearchBy, -1);
         VehicleByLicensePlate foundHashRecord = this.extHashFileByLP.get(tempHashRecord);
 
         if (foundHashRecord != null) {
             int heapBlockAddress = foundHashRecord.getBlockAddress();
-            Vehicle tempHeapRecord = new Vehicle("", "", -1, foundHashRecord.getLicensePlateCode(), null);
+            Vehicle tempHeapRecord = new Vehicle("", "", -1, foundHashRecord.getKeyLicensePlateCode(), null);
 
             return this.insertServiceVisitHelper(serviceVisit, heapBlockAddress, tempHeapRecord);
         }
@@ -144,7 +144,7 @@ public class Model {
      * @return pôvodný záznam, ktorý bol editovaný
      */
     public Vehicle updateVehicle(Vehicle oldVehicle, Vehicle newVehicle) throws IOException {
-        VehicleByCustomerID tempHashRecord = new VehicleByCustomerID(-1, oldVehicle.getCustomerID());
+        VehicleByCustomerID tempHashRecord = new VehicleByCustomerID(-1, oldVehicle.getCustomerID(), "");
         VehicleByCustomerID foundHashRecord = this.extHashFileByID.get(tempHashRecord);
 
         if (foundHashRecord != null) {
@@ -159,7 +159,7 @@ public class Model {
     // 5. Zmazanie návštevy servisu – umožní zmazať akékoľvek evidované údaje (vozidlo sa vyhľadá
     // podľa id zákazníka alebo podľa EČV – vyberie si užívateľ)
     public Vehicle removeServiceVisitFromVehicle(Vehicle vehicle, int serviceVisitIndex) throws IOException {
-        VehicleByCustomerID tempHashRecord = new VehicleByCustomerID(-1, vehicle.getCustomerID());
+        VehicleByCustomerID tempHashRecord = new VehicleByCustomerID(-1, vehicle.getCustomerID(), "");
         VehicleByCustomerID foundHashRecord = this.extHashFileByID.get(tempHashRecord);
 
         if (foundHashRecord != null) {
@@ -187,6 +187,42 @@ public class Model {
         return null;
     }
 
+    // 6. Zmazanie vozidla – umožní zmazať všetky údaje o vozidle (vozidlo sa vyhľadá podľa id
+    // zákazníka alebo podľa EČV – vyberie si užívateľ)
+    public Vehicle deleteVehicleByID(int customerID) throws IOException {
+        VehicleByCustomerID tempHashRecord = new VehicleByCustomerID(-1, customerID, "");
+        VehicleByCustomerID deletedHashRecord = this.extHashFileByID.delete(tempHashRecord);
+
+        if (deletedHashRecord != null) {
+            VehicleByLicensePlate tempHashRecordByLP = new VehicleByLicensePlate(deletedHashRecord.getBlockAddress(), deletedHashRecord.getLicensePlateCode(), deletedHashRecord.getKeyCustomerID());
+            this.extHashFileByLP.delete(tempHashRecordByLP);
+
+            int heapBlockAddress = deletedHashRecord.getBlockAddress();
+            Vehicle tempHeapRecord = new Vehicle("", "", deletedHashRecord.getKeyCustomerID(), "", null);
+
+            return this.heapFileVehicles.delete(heapBlockAddress, tempHeapRecord);
+        }
+
+        return null;
+    }
+
+    public Vehicle deleteVehicleByLP(String licensePlate) throws IOException {
+        VehicleByLicensePlate tempHashRecord = new VehicleByLicensePlate(-1, licensePlate, -1);
+        VehicleByLicensePlate deletedHashRecord = this.extHashFileByLP.delete(tempHashRecord);
+
+        if (deletedHashRecord != null) {
+            VehicleByCustomerID tempHashRecordByID = new VehicleByCustomerID(deletedHashRecord.getBlockAddress(), deletedHashRecord.getCustomerID(), deletedHashRecord.getKeyLicensePlateCode());
+            this.extHashFileByID.delete(tempHashRecordByID);
+
+            int heapBlockAddress = deletedHashRecord.getBlockAddress();
+            Vehicle tempHeapRecord = new Vehicle("", "", -1, deletedHashRecord.getKeyLicensePlateCode(), null);
+
+            return this.heapFileVehicles.delete(heapBlockAddress, tempHeapRecord);
+        }
+
+        return null;
+    }
+
     public String readHeapFileSequentially() throws IOException {
         return this.heapFileVehicles.readSequentially();
     }
@@ -197,6 +233,18 @@ public class Model {
 
     public String readExtHashFileByLPSequentially() throws IOException {
         return this.extHashFileByLP.readSequentially();
+    }
+
+    public String getHeapFileControlInfo() {
+        return this.heapFileVehicles.toString();
+    }
+
+    public String getHashFileByIDControlInfo() {
+        return this.extHashFileByID.toString();
+    }
+
+    public String getHashFileByLPControlInfo() {
+        return this.extHashFileByLP.toString();
     }
 
     public void close() {

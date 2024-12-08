@@ -3,7 +3,7 @@ package Tools;
 import java.util.Random;
 
 public class StringGenerator {
-    private static long uniqueStringCounter = 0; // TODO
+    private static long uniqueStringCounter = 0;
 
     public static long getUniqueStringCounter() {
         return uniqueStringCounter;

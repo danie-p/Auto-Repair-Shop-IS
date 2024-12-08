@@ -78,38 +78,56 @@ public class Tester {
         TestData data13 = new TestData("Puchov", 237);
         TestData data14 = new TestData("Ilava", 240);
         TestData data15 = new TestData("Brezno", 60);
-//        TestData data16 = new TestData("Bratislava", 61);
-//        TestData data17 = new TestData("Skalica", 189);
-//        TestData data18 = new TestData("Bytca", 253);
+        TestData data16 = new TestData("Bratislava", 61);
+        TestData data17 = new TestData("Skalica", 189);
+        TestData data18 = new TestData("Bytca", 253);
+        TestData data19 = new TestData("Kremnica", 192);
+
+        TestData data20 = new TestData("Sobrance", 250);
+        TestData data21 = new TestData("Medzilaborce", 249);
 
         ExtendibleHashFile<TestData> extTest = new ExtendibleHashFile<TestData>("test_hash", clusterSize, data1);
-        extTest.insert(data1);
-        extTest.insert(data2);
-        extTest.insert(data3);
-        extTest.insert(data4);
-        extTest.insert(data5);
-        extTest.insert(data6);
-        extTest.insert(data7);
-        extTest.insert(data8);
-        extTest.insert(data9);
-        extTest.insert(data10);
+//        extTest.insert(data1);
+//        extTest.insert(data2);
+//        extTest.insert(data3);
+//        extTest.insert(data4);
+//        extTest.insert(data5);
+//        extTest.insert(data6);
+//        extTest.insert(data7);
+//        extTest.insert(data8);
+//        extTest.insert(data9);
+//        extTest.insert(data10);
 
-        extTest.insert(data11);
-        extTest.insert(data12);
-        extTest.insert(data13);
+//        extTest.insert(data11);
+//        extTest.insert(data12);
+//        extTest.insert(data13);
 
 //        extTest.insert(data16);
 //        extTest.insert(data17);
 //        extTest.insert(data18);
 
-        extTest.insert(data14);
-        extTest.insert(data15);
+//        extTest.insert(data14);
+//        extTest.insert(data15);
 
-        extTest.delete(data9);  // Poprad
-        extTest.delete(data10); // Lucenec
-        extTest.delete(data11); // Zvolen
-        extTest.delete(data12); // Presov
+//        extTest.insert(data19);
+
+//        extTest.delete(data9);  // Poprad
+//        extTest.delete(data10); // Lucenec
+//        extTest.delete(data11); // Zvolen
+//        extTest.delete(data12); // Presov
 //        extTest.delete(data4);  // Levice
+//        extTest.delete(data2);  // Kosice
+//        extTest.delete(data8);  // Nitra
+//        extTest.delete(data3);  // Martin
+//        extTest.delete(data1);  // Zilina
+
+        extTest.insert(data20); // Sobrance
+        extTest.insert(data10); // Lucenec
+        extTest.insert(data3);  // Martin
+        extTest.insert(data21); // Medzilaborce
+        extTest.insert(data13); // Puchov
+//
+        extTest.delete(data13); // Puchov
 
         System.out.println(extTest.readSequentially());
         System.out.println(extTest);

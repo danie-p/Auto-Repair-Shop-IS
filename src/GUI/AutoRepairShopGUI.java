@@ -54,9 +54,10 @@ public class AutoRepairShopGUI extends JFrame {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-            controller.close();
-            closeGeneratorData(generatorControlData);
-            System.exit(0);
+                mainOperations.displayTextInfo("Exporting stored data into files.\nClosing the application.");
+                controller.close();
+                closeGeneratorData(generatorControlData);
+                System.exit(0);
             }
         });
     }

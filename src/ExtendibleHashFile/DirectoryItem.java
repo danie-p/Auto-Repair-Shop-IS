@@ -51,4 +51,13 @@ public class DirectoryItem {
     public String toCSV() {
         return this.blockAddress + "," + this.localDepth + "," + this.validCount;
     }
+
+    @Override
+    public String toString() {
+        return "DirectoryItem{" +
+                "blockAddress=" + blockAddress +
+                ", localDepth=" + localDepth +
+                ", validCount=" + validCount +
+                '}';
+    }
 }
