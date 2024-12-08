@@ -139,18 +139,27 @@ public class Model {
     // 4. Zmena – umožní zmeniť akékoľvek evidované údaje (vozidlo sa vyhľadá podľa id zákazníka
     // alebo podľa EČV – vyberie si užívateľ), pozor na zmenu kľúčových a nekľúčových atribútov
     /**
-     * @param oldVehicle dočasný záznam vozidla s nastaveným kľúčom customerID
+     * @param oldVehicle dočasný záznam vozidla s nastavenými kľúčovými atribútmi (customer ID, license plate)
      * @param newVehicle záznam vozidla s úplne nastavenými hodnotami, ktoré sa majú aktualizovať
      * @return pôvodný záznam, ktorý bol editovaný
      */
     public Vehicle updateVehicle(Vehicle oldVehicle, Vehicle newVehicle) throws IOException {
-        VehicleByCustomerID tempHashRecord = new VehicleByCustomerID(-1, oldVehicle.getCustomerID(), "");
+        VehicleByCustomerID tempHashRecord = new VehicleByCustomerID(-1, oldVehicle.getCustomerID(), oldVehicle.getLicensePlateCode());
         VehicleByCustomerID foundHashRecord = this.extHashFileByID.get(tempHashRecord);
 
         if (foundHashRecord != null) {
             int heapBlockAddress = foundHashRecord.getBlockAddress();
 
-            return this.heapFileVehicles.update(heapBlockAddress, oldVehicle, newVehicle);
+            Vehicle updatedRecord = this.heapFileVehicles.update(heapBlockAddress, oldVehicle, newVehicle);
+
+            VehicleByCustomerID newHashRecord = new VehicleByCustomerID(foundHashRecord.getBlockAddress(), newVehicle.getCustomerID(), newVehicle.getLicensePlateCode());
+            this.extHashFileByID.update(tempHashRecord, newHashRecord);
+
+            VehicleByLicensePlate tempHashRecordByLP = new VehicleByLicensePlate(-1, oldVehicle.getLicensePlateCode(), oldVehicle.getCustomerID());
+            VehicleByLicensePlate newHashRecordByLP = new VehicleByLicensePlate(foundHashRecord.getBlockAddress(), newVehicle.getLicensePlateCode(), newVehicle.getCustomerID());
+            this.extHashFileByLP.update(tempHashRecordByLP, newHashRecordByLP);
+
+            return updatedRecord;
         }
 
         return null;

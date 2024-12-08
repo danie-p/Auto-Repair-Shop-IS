@@ -319,15 +319,23 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
      * @return záznam nájdený v hešovacom súbore
      */
     public T get(T recordWithKey) throws IOException {
-        int directoryIndex = this.getDirectoryIndex(recordWithKey);
-        int blockAddress = this.directory.get(directoryIndex).getBlockAddress();
-
-        Block<T> blockFoundByKey = this.readBlockFromFile(blockAddress);
+        Block<T> blockFoundByKey = this.readBlockWithRecord(recordWithKey);
 
         if (blockFoundByKey == null)
             return null;
 
         return blockFoundByKey.getRecord(recordWithKey);
+    }
+
+    private Block<T> readBlockWithRecord(T recordWithKey) throws IOException {
+        if (recordWithKey.getSize() != this.recordSize) {
+            throw new IllegalArgumentException("Incorrect size of searched record!");
+        }
+
+        int directoryIndex = this.getDirectoryIndex(recordWithKey);
+        int blockAddress = this.directory.get(directoryIndex).getBlockAddress();
+
+        return this.readBlockFromFile(blockAddress);
     }
 
     /**
@@ -507,6 +515,31 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
         }
 
         this.directory = halvedDirectory;
+    }
+
+    public T update(T oldRecordWithKey, T newRecord) throws IOException {
+        Block<T> foundBlockToUpdate = this.readBlockWithRecord(oldRecordWithKey);
+
+        if (foundBlockToUpdate == null || foundBlockToUpdate.isFullyEmpty())
+            return null;
+
+        T oldRecord;
+        if (oldRecordWithKey.isEqualTo(newRecord)) {
+            // ak sa nezmenil klucovy atribut
+            oldRecord = foundBlockToUpdate.updateRecord(oldRecordWithKey, newRecord);
+
+            int directoryIndex = this.getDirectoryIndex(oldRecordWithKey);
+            int blockAddress = this.directory.get(directoryIndex).getBlockAddress();
+
+            // zapis blok s aktualizovanym obsahom
+            this.writeBlockIntoFile(blockAddress, foundBlockToUpdate);
+        } else {
+            // ak sa zmenil klucovy atribut
+            oldRecord = this.delete(oldRecordWithKey);
+            this.insert(newRecord);
+        }
+
+        return oldRecord;
     }
 
     @Override

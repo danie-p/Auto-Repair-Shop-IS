@@ -167,9 +167,7 @@ public class HeapFile<T extends IData<T>> extends FileDataStructure<T> {
 
         T oldRecord = foundBlockToUpdate.updateRecord(oldRecordWithKey, newRecord);
 
-        // TODO: upravit, aby update spravne fungoval aj nad klucovymi atributmi (delete + insert)
-
-        // ak bol editovany neklucovy atribut, zapis blok s aktualizovanym obsahom
+        // zapis blok s aktualizovanym obsahom
         this.writeBlockIntoFile(blockAddress, foundBlockToUpdate);
 
         return oldRecord;

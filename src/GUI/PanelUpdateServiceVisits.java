@@ -68,7 +68,7 @@ public class PanelUpdateServiceVisits {
 
     public void updateServiceVisit(ServiceVisit serviceVisit) {
         int date = serviceVisit.getDate();
-        LocalDateTime dateTime = Instant.ofEpochSecond(date).atZone(ZoneId.systemDefault()).toLocalDateTime();
+        LocalDateTime dateTime = Instant.ofEpochSecond(date).atZone(ZoneOffset.UTC).toLocalDateTime();
 
         textFieldUpdateDay.setText(String.valueOf(dateTime.getDayOfMonth()));
         textFieldUpdateMonth.setText(String.valueOf(dateTime.getMonthValue()));
