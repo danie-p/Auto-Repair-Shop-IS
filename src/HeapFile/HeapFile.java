@@ -142,6 +142,9 @@ public class HeapFile<T extends IData<T>> extends FileDataStructure<T> {
     }
 
     public Block<T> readBlockWithRecord(int blockAddress, T recordWithKey) throws IOException {
+        if (recordWithKey == null)
+            return null;
+
         if (recordWithKey.getSize() != this.recordSize) {
             throw new IllegalArgumentException("Incorrect size of searched record!");
         }
@@ -184,10 +187,13 @@ public class HeapFile<T extends IData<T>> extends FileDataStructure<T> {
         if (foundBlockToDelete == null || foundBlockToDelete.isFullyEmpty())
             return null;
 
-        T deletedRecord = foundBlockToDelete.deleteRecord(recordWithKey);
+        T deletedRecord;
 
         if (foundBlockToDelete.isFull()) {
             // ak bol blok pred vymazanim zaznamu plny
+
+            // vymaz zaznam
+            deletedRecord = foundBlockToDelete.deleteRecord(recordWithKey);
 
             if (foundBlockToDelete.isPartiallyEmpty()) {
                 // ak blok ostane po vymazani zaznamu ciastocne prazdny, pridaj ho do zretazenia ciastocne prazdnych blokov (na zaciatok)
@@ -201,7 +207,11 @@ public class HeapFile<T extends IData<T>> extends FileDataStructure<T> {
         } else {
             // ak bol blok pred vymazanim zaznamu ciastocne prazdny
 
+            // vymaz zatnam
+            deletedRecord = foundBlockToDelete.deleteRecord(recordWithKey);
+
             if (foundBlockToDelete.isFullyEmpty()) {
+                // ak blok ostane po vymazani zaznamu uplne prazdny
                 // odstran zo zretazenia ciastocne prazdnych blokov
                 this.removeEmptyBlockFromChain(foundBlockToDelete);
 

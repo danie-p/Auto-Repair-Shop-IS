@@ -23,7 +23,7 @@ public class Tester {
         operationsGeneratorForHeapFile.insertOnly(initDataAmount);
 
         System.out.println("Starting all operations");
-        boolean success = operationsGeneratorForHeapFile.insertGetDelete();
+        boolean success = operationsGeneratorForHeapFile.insertGetUpdateDelete();
 
         if (success) {
             System.out.println("Test run on vehicles was successful.");

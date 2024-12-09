@@ -60,6 +60,39 @@ public class OperationsGeneratorForHeapFile<T extends IData<T>> extends Operatio
         return true;
     }
 
+    public boolean insertGetUpdateDelete() throws IOException {
+        return this.insertGetUpdateDelete(0.2, 0.3, 0.3, 0.8);
+    }
+
+    /**
+     * @param insertP pravdepodobnosť operácie vloženia
+     * @param getP pravdepodobnosť operácie hľadania
+     * @param updateP pravdepodonosť operácie editácie
+     * pravdepodobnosť operácie mazania = 1 - (insertP + searchP + updateP)
+     * @param existingP pravdepodobnosť hľadania/mazania/editácie existujúceho prvku vloženého v štruktúre
+     */
+    public boolean insertGetUpdateDelete(double insertP, double getP, double updateP, double existingP) throws IOException {
+        for (int i = 0; i < this.operationsCount; i++) {
+            double randOperation = random.nextDouble();
+
+            if (randOperation < insertP) {
+                insertTest();
+            } else if (randOperation < insertP + getP) {
+                if (!getTest(existingP)) return false;
+            } else if (randOperation < insertP + getP + updateP) {
+                if (!updateTest(existingP)) return false;
+            } else {
+                deleteTest(existingP);
+            }
+
+            HashSet<T> allDataInHeapFile = heapFile.getAllDataInFileDataStructure();
+            if (dataIsNotConsistent(this.externalDataSet, allDataInHeapFile))
+                return false;
+        }
+
+        return true;
+    }
+
     private void insertTest() throws IOException {
         T randomInsertedData = this.dataGenerator.generateData();
 
@@ -131,27 +164,53 @@ public class OperationsGeneratorForHeapFile<T extends IData<T>> extends Operatio
         return true;
     }
 
-    // TODO: pridat do testov
-    private void updateTest(double existingP) throws IOException {
+    private boolean updateTest(double existingP) throws IOException {
         double randExistingElement = random.nextDouble();
-        RecordWithBlockAddress<T> oldData;
-        RecordWithBlockAddress<T> newData = this.dataWithAddressGenerator.generateDataWithAddress();
+        RecordWithBlockAddress<T> oldDataWithAddress;
+        RecordWithBlockAddress<T> newDataWithAddress;
+        T newData = this.dataGenerator.generateData();
+        T oldData;
 
+        T updatedData;
         if (randExistingElement < existingP && !externalDataList.isEmpty()) {
             // vyhladaj existujuci (uz vlozeny) prvok
             int randIndex = random.nextInt(externalDataList.size());
-            oldData = externalDataList.set(randIndex, newData);
-            this.heapFile.update(oldData.getBlockAddress(), oldData.getRecord(), newData.getRecord());
+            oldDataWithAddress = externalDataList.get(randIndex);
+            newDataWithAddress = new RecordWithBlockAddress<>(oldDataWithAddress.getBlockAddress(), newData);
+
+            oldDataWithAddress = externalDataList.set(randIndex, newDataWithAddress);
+            oldData = oldDataWithAddress.getRecord();
+
+            externalDataSet.remove(oldData);
+            externalDataSet.add(newData);
+
+            updatedData = this.heapFile.update(oldDataWithAddress.getBlockAddress(), oldData, newData);
+
+            operationsCounter++;
+            System.out.println("Operation " + operationsCounter + ": update; old data: " + oldData + ", new data: " + newData);
+
         } else {
             // vyhladaj nahodny prvok
-            oldData = this.dataWithAddressGenerator.generateDataWithAddress();
-            if (externalDataList.contains(oldData)) {
-                externalDataList.set(externalDataList.indexOf(oldData), newData);
+            oldDataWithAddress = this.dataWithAddressGenerator.generateDataWithAddress();
+            newDataWithAddress = this.dataWithAddressGenerator.generateDataWithAddress();
+
+            if (externalDataList.contains(oldDataWithAddress)) {
+                oldDataWithAddress = externalDataList.set(externalDataList.indexOf(oldDataWithAddress), newDataWithAddress);
+                oldData = oldDataWithAddress.getRecord();
+                externalDataSet.remove(oldData);
+                externalDataSet.add(newData);
+            } else {
+                oldData = null;
             }
-            this.heapFile.update(oldData.getBlockAddress(), oldData.getRecord(), newData.getRecord());
+            updatedData = this.heapFile.update(oldDataWithAddress.getBlockAddress(), oldData, newData);
+            operationsCounter++;
+            System.out.println("Operation " + operationsCounter + ": update; old data: " + oldData + ", new data: " + newData);
         }
 
-        operationsCounter++;
-        System.out.println("Operation " + operationsCounter + ": update; old data: " + oldData.toString() + ", new data: " + newData.toString());
+        if (oldData != null && !oldData.equals(updatedData))
+            return false;
+
+        T foundNewData = this.heapFile.get(newDataWithAddress.getBlockAddress(), newData);
+        return foundNewData == null || this.externalDataSet.contains(foundNewData);
     }
 }

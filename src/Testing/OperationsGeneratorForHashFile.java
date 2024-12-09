@@ -50,7 +50,7 @@ public class OperationsGeneratorForHashFile<T extends IHashData<T>> extends Oper
             if (dataIsNotConsistent(this.externalDataSet, allDataInExtHashFile))
                 return false;
         }
-
+        System.out.println(this.extHashFile.readEmptyBlocks());
         return true;
     }
 

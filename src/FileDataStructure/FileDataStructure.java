@@ -103,6 +103,23 @@ public abstract class FileDataStructure<T extends IData<T>> {
         return sb.toString();
     }
 
+    public String readEmptyBlocks() throws IOException {
+        StringBuilder sb = new StringBuilder();
+
+        int i = 0;
+        while (i < this.file.length() / this.clusterSize) {
+            Block<T> readBlock = this.readBlockFromFile(i);
+            if (readBlock != null && readBlock.isFullyEmpty()) {
+                // kontrola prazdnych blokov mimo zretazenia ... nemali by sa vypisat ziadne
+//                if (readBlock.getNext() == -1 && readBlock.getPrevious() == -1 && i != this.fullyEmpty)
+                    sb.append("=== Block ").append(i).append(" ===\n").append(readBlock).append("\n\n");
+            }
+            i++;
+        }
+
+        return sb.toString();
+    }
+
     /**
      * Pomocná metóda na odstránenie bloku zo začiatku zreťazenia plne prázdnych blokov.
      * Ak existuje jeho nasledovník, používajú sa 2 prístupy do súboru (1 na prečítanie a 1 na zápis nasledovníka).
