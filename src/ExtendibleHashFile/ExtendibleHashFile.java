@@ -328,6 +328,9 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
     }
 
     private Block<T> readBlockWithRecord(T recordWithKey) throws IOException {
+        if (recordWithKey == null)
+            return null;
+
         if (recordWithKey.getSize() != this.recordSize) {
             throw new IllegalArgumentException("Incorrect size of searched record!");
         }
@@ -521,6 +524,9 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
         Block<T> foundBlockToUpdate = this.readBlockWithRecord(oldRecordWithKey);
 
         if (foundBlockToUpdate == null || foundBlockToUpdate.isFullyEmpty())
+            return null;
+
+        if (foundBlockToUpdate.getRecord(oldRecordWithKey) == null)
             return null;
 
         T oldRecord;

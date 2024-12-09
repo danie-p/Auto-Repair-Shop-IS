@@ -19,8 +19,8 @@ public class Main {
     public static void main(String[] args) throws IOException {
         int clusterSizeSmall = 4000;
         int clusterSize = 8000;
-        int operationsCount = 1000;
-        int initDataAmount = 100;
+        int operationsCount = 10000;
+        int initDataAmount = 1000;
 
         Tester tester = new Tester();
 
@@ -30,7 +30,7 @@ public class Main {
 
         // HEAP FILE TESTS
 //        tester.runSmallHeapFileTestOnVehicles(clusterSizeSmall);
-        tester.runHeapFileTestOnVehicles("test", clusterSizeSmall, operationsCount, initDataAmount);
+//        tester.runHeapFileTestOnVehicles("test", clusterSizeSmall, operationsCount, initDataAmount);
 
         FlatDarkLaf.setup();
 

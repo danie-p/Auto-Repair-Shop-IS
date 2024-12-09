@@ -170,8 +170,8 @@ public class OperationsGeneratorForHeapFile<T extends IData<T>> extends Operatio
         RecordWithBlockAddress<T> newDataWithAddress;
         T newData = this.dataGenerator.generateData();
         T oldData;
-
         T updatedData;
+
         if (randExistingElement < existingP && !externalDataList.isEmpty()) {
             // vyhladaj existujuci (uz vlozeny) prvok
             int randIndex = random.nextInt(externalDataList.size());
@@ -185,13 +185,10 @@ public class OperationsGeneratorForHeapFile<T extends IData<T>> extends Operatio
             externalDataSet.add(newData);
 
             updatedData = this.heapFile.update(oldDataWithAddress.getBlockAddress(), oldData, newData);
-
-            operationsCounter++;
-            System.out.println("Operation " + operationsCounter + ": update; old data: " + oldData + ", new data: " + newData);
-
         } else {
             // vyhladaj nahodny prvok
             oldDataWithAddress = this.dataWithAddressGenerator.generateDataWithAddress();
+            oldData = oldDataWithAddress.getRecord();
             newDataWithAddress = this.dataWithAddressGenerator.generateDataWithAddress();
 
             if (externalDataList.contains(oldDataWithAddress)) {
@@ -199,15 +196,14 @@ public class OperationsGeneratorForHeapFile<T extends IData<T>> extends Operatio
                 oldData = oldDataWithAddress.getRecord();
                 externalDataSet.remove(oldData);
                 externalDataSet.add(newData);
-            } else {
-                oldData = null;
             }
             updatedData = this.heapFile.update(oldDataWithAddress.getBlockAddress(), oldData, newData);
-            operationsCounter++;
-            System.out.println("Operation " + operationsCounter + ": update; old data: " + oldData + ", new data: " + newData);
         }
 
-        if (oldData != null && !oldData.equals(updatedData))
+        operationsCounter++;
+        System.out.println("Operation " + operationsCounter + ": update; old data: " + oldData + ", new data: " + newData);
+
+        if (updatedData != null && !oldData.equals(updatedData))
             return false;
 
         T foundNewData = this.heapFile.get(newDataWithAddress.getBlockAddress(), newData);

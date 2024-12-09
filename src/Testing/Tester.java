@@ -39,7 +39,7 @@ public class Tester {
         operationsGeneratorForHashFile.insertOnly(initDataAmount);
 
         System.out.println("Starting all operations");
-        boolean success = operationsGeneratorForHashFile.insertGetDelete();
+        boolean success = operationsGeneratorForHashFile.insertGetUpdateDelete();
 
         if (success) {
             System.out.println("Test run on vehicles was successful.");
