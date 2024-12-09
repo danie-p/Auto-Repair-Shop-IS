@@ -14,7 +14,7 @@ public class Model {
     private final String controlHashFileByIDName;
     private final String controlHashFileByLPName;
 
-    public Model(int clusterSize,
+    public Model(int clusterSizeHeap, int clusterSizeHash,
                  String heapFileName, String extHashFileByIDName, String extHashFileByLPName,
                  String controlHeapFileName, String controlHashFileByIDName, String controlHashFileByLPName) {
         Vehicle exampleVehicle = new Vehicle("", "", -1, "", null);
@@ -25,9 +25,9 @@ public class Model {
         this.controlHashFileByIDName = controlHashFileByIDName;
         this.controlHashFileByLPName = controlHashFileByLPName;
 
-        this.heapFileVehicles = HeapFile.fromFile(this.controlHeapFileName, heapFileName, clusterSize, exampleVehicle);
-        this.extHashFileByID = ExtendibleHashFile.fromFile(this.controlHashFileByIDName, extHashFileByIDName, clusterSize, exampleVehicleByID);
-        this.extHashFileByLP = ExtendibleHashFile.fromFile(this.controlHashFileByLPName, extHashFileByLPName, clusterSize, exampleVehicleByLP);
+        this.heapFileVehicles = HeapFile.fromFile(this.controlHeapFileName, heapFileName, clusterSizeHeap, exampleVehicle);
+        this.extHashFileByID = ExtendibleHashFile.fromFile(this.controlHashFileByIDName, extHashFileByIDName, clusterSizeHash, exampleVehicleByID);
+        this.extHashFileByLP = ExtendibleHashFile.fromFile(this.controlHashFileByLPName, extHashFileByLPName, clusterSizeHash, exampleVehicleByLP);
     }
 
     public void clearData() throws IOException {

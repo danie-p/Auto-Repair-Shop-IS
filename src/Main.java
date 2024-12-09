@@ -18,7 +18,6 @@ import java.util.Scanner;
 public class Main {
     public static void main(String[] args) throws IOException {
         int clusterSizeSmall = 4000;
-        int clusterSize = 8000;
         int operationsCount = 10000;
         int initDataAmount = 1000;
 
@@ -39,7 +38,9 @@ public class Main {
             System.exit(0);
         }
 
-        Controller controller = getController(fileNames, clusterSize);
+        int clusterSizeHeap = 8000;
+        int clusterSizeHash = 200;
+        Controller controller = getController(fileNames, clusterSizeHeap, clusterSizeHash);
 
         SwingUtilities.invokeLater(() -> {
             AutoRepairShopGUI gui = new AutoRepairShopGUI(controller, fileNames[6]);
@@ -47,7 +48,7 @@ public class Main {
         });
     }
 
-    private static Controller getController(String[] fileNames, int clusterSize) {
+    private static Controller getController(String[] fileNames, int clusterSizeHeap, int clusterSizeHash) {
         String heapFileName = fileNames[0];
         String hashFileByIDName = fileNames[1];
         String hashFileByLPName = fileNames[2];
@@ -55,7 +56,7 @@ public class Main {
         String controlHashFileByIDName = fileNames[4];
         String controlHashFileByLPName = fileNames[5];
 
-        Model model = new Model(clusterSize,
+        Model model = new Model(clusterSizeHeap, clusterSizeHash,
                 heapFileName, hashFileByIDName, hashFileByLPName,
                 controlHeapFileName, controlHashFileByIDName, controlHashFileByLPName);
 

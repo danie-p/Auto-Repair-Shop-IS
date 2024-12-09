@@ -118,6 +118,22 @@ public class Controller {
     public String updateVehicleByID(Vehicle oldVehicle,
                                     String customerName, String customerSurname, int customerID, String licensePlateCode,
                                     ServiceVisit[] serviceVisits) throws IOException {
+        if (oldVehicle.getCustomerID() != customerID) {
+            // bolo editovane customerID
+            // skontroluj, ci vozidlo s danym customerID este nie je evidovane v systeme
+            if (this.model.getVehicleByID(customerID) != null)
+                // vozidlo s danym ID uz v systeme existuje
+                return "Vehicle insertion was unsuccessful! A vehicle with Customer ID = [" + customerID + "] already exists!";
+        }
+
+        if (!oldVehicle.getLicensePlateCode().equals(licensePlateCode)) {
+            // bol editovany licensePlateCode
+            // skontroluj, ci vozidlo s danym licensePlateCode este nie je evidovane v systeme
+            if (this.model.getVehicleByLP(licensePlateCode) != null)
+                // vozidlo s danym ECV uz v systeme existuje
+                return "Vehicle insertion was unsuccessful! A vehicle with License Plate Code = [" + licensePlateCode + "] already exists!";
+        }
+
         Vehicle newVehicle = new Vehicle(customerName, customerSurname, customerID, licensePlateCode, serviceVisits);
         Vehicle oldFoundVehicle = this.model.updateVehicle(oldVehicle, newVehicle);
 
