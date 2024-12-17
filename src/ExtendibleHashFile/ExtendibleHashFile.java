@@ -573,9 +573,12 @@ public class ExtendibleHashFile<T extends IHashData<T>> extends FileDataStructur
 
         return "ExtendibleHashFile{" +
                 "fileDepth=" + fileDepth +
-                ",\ndirectory=" + sb +
-                ",\nfullyEmpty=" + fullyEmpty +
+                ", clusterSize=" + clusterSize +
+                ", recordSize=" + recordSize +
+                ", fullyEmpty=" + fullyEmpty +
                 ", blocksCount=" + blocksCount +
+                ", fileName='" + fileName + '\'' +
+                ",\ndirectory=" + sb +
                 '}';
     }
 }

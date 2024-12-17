@@ -257,8 +257,11 @@ public class HeapFile<T extends IData<T>> extends FileDataStructure<T> {
     public String toString() {
         return "HeapFile{" +
                 "partiallyEmpty=" + partiallyEmpty +
+                ", clusterSize=" + clusterSize +
+                ", recordSize=" + recordSize +
                 ", fullyEmpty=" + fullyEmpty +
                 ", blocksCount=" + blocksCount +
+                ", fileName='" + fileName + '\'' +
                 '}';
     }
 }

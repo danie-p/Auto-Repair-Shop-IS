@@ -36,6 +36,14 @@ public class BitSetUtility {
 
         // variabilne dlzky strToConvert
 
+        if (strToConvert.length() < 4) {
+            StringBuilder sb = new StringBuilder(strToConvert);
+            while (sb.length() < 4) {
+                sb.append(" ");
+            }
+            strToConvert = sb.toString();
+        }
+
         // vezmi posledne 4 znaky zo stringu
         strToConvert = strToConvert.substring(strToConvert.length() - 4);
 

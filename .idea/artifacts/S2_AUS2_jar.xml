@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="S2_AUS2:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/S2_AUS2_jar</output-path>
+    <root id="archive" name="S2_AUS2.jar">
+      <element id="module-output" name="S2_AUS2" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/libs/flatlaf-3.5.2.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

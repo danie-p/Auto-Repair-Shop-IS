@@ -5,7 +5,7 @@ import FileDataStructure.IData;
 import java.util.HashSet;
 import java.util.Random;
 
-public class OperationsGenerator<T extends IData<T>> {
+public abstract class OperationsGenerator<T extends IData<T>> {
     protected int operationsCount;
     protected final Random random;
     protected final DataGenerator<T> dataGenerator;

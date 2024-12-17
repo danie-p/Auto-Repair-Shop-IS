@@ -5,6 +5,7 @@ import GUI.InitDialog;
 import HeapFile.HeapFile;
 import Model.Model;
 import Testing.Tester;
+import Tools.Constants;
 import Tools.StringGenerator;
 import com.formdev.flatlaf.FlatDarkLaf;
 
@@ -33,13 +34,16 @@ public class Main {
 
         FlatDarkLaf.setup();
 
+        System.out.println(Constants.vehicleSize);
+        System.out.println(Constants.serviceVisitSize);
+
         String[] fileNames = InitDialog.showInitDialog();
         if (fileNames == null) {
             System.exit(0);
         }
 
-        int clusterSizeHeap = 8000;
-        int clusterSizeHash = 200;
+        int clusterSizeHeap = 5000;
+        int clusterSizeHash = 100;
         Controller controller = getController(fileNames, clusterSizeHeap, clusterSizeHash);
 
         SwingUtilities.invokeLater(() -> {
@@ -62,6 +66,4 @@ public class Main {
 
         return new Controller(model);
     }
-
-
 }
